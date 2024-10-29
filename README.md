@@ -8,6 +8,10 @@
 
 ![](./docs/example.png)
 
+## Demo
+
+![](./docs/example.webm)
+
 ## Run
 
 ```sh

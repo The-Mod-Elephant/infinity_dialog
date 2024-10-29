@@ -25,9 +25,9 @@ func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	if err != nil {
 		return &rows
 	}
-	varriables, err := translation.FromFileContents(string(fileContent))
+	variables, err := translation.FromFileContents(string(fileContent))
 	if err == nil {
-		for _, v := range *varriables {
+		for _, v := range *variables {
 			rows = append(rows, table.Row{file.Name(), v.Identifier, v.Value})
 		}
 	}
@@ -94,6 +94,7 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return l, tea.Quit
 		case "enter":
 			return l, tea.Batch(
+				tea.ClearScrollArea(),
 				tea.Printf("%s", l.table.SelectedRow()[2]),
 			)
 		}
