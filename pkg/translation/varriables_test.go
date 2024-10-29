@@ -7,12 +7,12 @@ import (
 
 func TestString(t *testing.T) {
 	testCases := []struct {
-		expected   *Varriable
+		expected   *Variable
 		testString string
 		error      error
 	}{
 		{
-			expected: &Varriable{
+			expected: &Variable{
 				Identifier: "123",
 				Value:      "test string",
 			},
@@ -31,12 +31,13 @@ func TestString(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		start := 0
-		v, err := ParseVarriable(tc.testString, &start)
+		v, err := FromString(tc.testString, 0)
 		if !errors.Is(err, tc.error) {
 			t.Fatalf("Unexpected Error:\n%+v\n%+v", err, tc.error)
 		}
-		if tc.expected != nil && *v != *tc.expected {
+		if tc.expected != nil &&
+			v.Identifier != tc.expected.Identifier &&
+			v.Value != tc.expected.Value {
 			t.Fatalf("Failed:\n%+v\n%+v", v, tc.expected)
 		}
 	}

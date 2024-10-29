@@ -3,7 +3,6 @@ package translation
 import (
 	"errors"
 	"fmt"
-	"unicode"
 )
 
 var (
@@ -11,56 +10,77 @@ var (
 	ErrValue      = errors.New("value error")
 )
 
-type Varriable struct {
-	Identifier string
-	Value      string
+type Variable struct {
+	Identifier      string
+	Value           string
+	recording       bool
+	identifierStart int
+	identifierEnd   int
+	valueStart      int
+	valueEnd        int
 }
 
-func ParseVarriable(s string, start *int) (*Varriable, error) {
-	var i, v string
-	var flag bool
-	for *start < len(s) {
-		r := rune(s[*start])
-		if r == '@' {
-			flag = true
-		} else if flag && !unicode.IsDigit(r) {
-			flag = false
+func (v *Variable) toggleRecording() {
+	v.recording = !v.recording
+}
+
+func (v *Variable) isRecording() bool {
+	return v.recording
+}
+
+func (v *Variable) start() int {
+	return v.identifierStart
+}
+
+func (v *Variable) end() int {
+	return v.valueEnd
+}
+
+func FromString(s string, start int) (*Variable, error) {
+	v := &Variable{}
+	for i := start; i < len(s); i++ {
+		// 48->57 is 0-9 in ascii
+		if v.isRecording() && (s[i] < 48 || s[i] > 57) {
+			v.identifierEnd = i
+			v.Identifier = s[v.identifierStart:v.identifierEnd]
 			break
-		} else if flag {
-			i += string(r)
 		}
-		*start++
+		// "@" is 64 and "#" is 35
+		if s[i] == 64 || s[i] == 35 {
+			v.identifierStart = i + 1
+			v.toggleRecording()
+		}
 	}
-	if i == "" {
+	if v.Identifier == "" {
 		return nil, fmt.Errorf("%w empty identifier", ErrIdentifier)
 	}
-	for *start < len(s) {
+	v.toggleRecording()
+	for i := v.identifierEnd; i < len(s); i++ {
 		// "~" is 126
-		if flag && s[*start] == 126 {
-			flag = false
+		if v.isRecording() && s[i] == 126 {
+			v.valueEnd = i
+			v.Value = s[v.valueStart:v.valueEnd]
+			v.toggleRecording()
 			break
-		} else if s[*start] == 126 {
-			flag = true
-		} else if flag {
-			v += string(s[*start])
 		}
-		*start++
+		// "~" is 126
+		if s[i] == 126 {
+			v.valueStart = i + 1
+			v.toggleRecording()
+		}
 	}
-	if flag {
-		return nil, fmt.Errorf("%w flag not closed, got %s", ErrValue, v)
+	if v.isRecording() {
+		return nil, fmt.Errorf("%w still recording should be closed, got %+v", ErrValue, v)
 	}
-	return &Varriable{
-		Identifier: i,
-		Value:      v,
-	}, nil
+	return v, nil
 }
 
-func FromFileContents(fileContents string) (*[]Varriable, error) {
-	out := []Varriable{}
-	n := 0
-	for n < len(fileContents) {
-		if n+2 < len(fileContents) && fileContents[n] == '/' && fileContents[n+1] == '/' {
-			n += 2
+func FromFileContents(fileContents string) (*[]Variable, error) {
+	out := []Variable{}
+	for n := 0; n < len(fileContents); n++ {
+		// Deal with single line comment
+		if fileContents[n] == '/' && fileContents[n+1] == '/' {
+			n++
 			for n < len(fileContents) {
 				s := fileContents[n]
 				if s == '\n' {
@@ -69,9 +89,9 @@ func FromFileContents(fileContents string) (*[]Varriable, error) {
 				n++
 			}
 		}
-		v, err := ParseVarriable(fileContents, &n)
-		if err == nil {
+		if v, err := FromString(fileContents, n); err == nil {
 			out = append(out, *v)
+			n = v.end()
 		}
 	}
 	return &out, nil
