@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -92,6 +91,6 @@ func (d directoryPicker) View() string {
 	}
 
 	s.WriteString("\n\n" + d.filepicker.View() + "\n")
-	s.WriteString(helpStyle.Render(fmt.Sprintf("%+v", d.filepicker.KeyMap)))
+	s.WriteString(helpStyle.Render("Keys: e->done, escape->./.., q->quit"))
 	return s.String()
 }

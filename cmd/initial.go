@@ -15,7 +15,7 @@ type model struct {
 func InitialModel() model {
 	return model{
 		choices: []string{
-			"Find all strings in a file",
+			"Find all strings in a mod/directory",
 			"Add strings to tra",
 			"What range of numbers are free",
 		},

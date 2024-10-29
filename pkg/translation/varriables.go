@@ -79,7 +79,7 @@ func FromFileContents(fileContents string) (*[]Variable, error) {
 	out := []Variable{}
 	for n := 0; n < len(fileContents); n++ {
 		// Deal with single line comment
-		if fileContents[n] == '/' && fileContents[n+1] == '/' {
+		if n+1 < len(fileContents) && fileContents[n] == '/' && fileContents[n+1] == '/' {
 			n++
 			for n < len(fileContents) {
 				s := fileContents[n]

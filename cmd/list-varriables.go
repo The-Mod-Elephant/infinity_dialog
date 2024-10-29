@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"io/fs"
+	"os"
+	"path/filepath"
+
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dark0dave/infinity_dialog/pkg/translation"
-	"github.com/dark0dave/infinity_dialog/pkg/util"
 )
 
 var baseStyle = lipgloss.NewStyle().
@@ -16,25 +19,41 @@ type list struct {
 	table table.Model
 }
 
+func generateRows(path string, file fs.FileInfo) *[]table.Row {
+	rows := []table.Row{}
+	fileContent, err := os.ReadFile(path)
+	if err != nil {
+		return &rows
+	}
+	varriables, err := translation.FromFileContents(string(fileContent))
+	if err == nil {
+		for _, v := range *varriables {
+			rows = append(rows, table.Row{file.Name(), v.Identifier, v.Value})
+		}
+	}
+	return &rows
+}
+
 func NewList(path string) list {
 	columns := []table.Column{
-		{Title: "FileName", Width: 15},
-		{Title: "Id", Width: 2},
-		{Title: "Value", Width: 35},
+		{Title: "FileName", Width: 12},
+		{Title: "Id", Width: 4},
+		{Title: "Value", Width: 40},
 	}
 	rows := []table.Row{}
-	for _, f := range util.GetFiles(path, ".tra") {
-		fileContent, err := util.ReadFile(path, f)
+	filepath.WalkDir(path, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
-			continue
+			return err
 		}
-		varriables, err := translation.FromFileContents(fileContent)
-		if err == nil {
-			for _, v := range *varriables {
-				rows = append(rows, table.Row{f.Name(), v.Identifier, v.Value})
-			}
+		ext := filepath.Ext(file.Name())
+		if !file.IsDir() && ext == ".tra" {
+			info, _ := file.Info()
+			file_rows := *generateRows(path, info)
+			rows = append(rows, file_rows...)
 		}
-	}
+
+		return nil
+	})
 
 	t := table.New(
 		table.WithColumns(columns),
@@ -75,7 +94,7 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return l, tea.Quit
 		case "enter":
 			return l, tea.Batch(
-				tea.Printf("Let's go to %s!", l.table.SelectedRow()[1]),
+				tea.Printf("%s", l.table.SelectedRow()[2]),
 			)
 		}
 	}
@@ -84,5 +103,5 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (l list) View() string {
-	return baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + "\n"
+	return baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
 }

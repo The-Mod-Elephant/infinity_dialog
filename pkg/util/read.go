@@ -28,6 +28,7 @@ func GetFiles(path string, ext string) []fs.FileInfo {
 func ReadFile(path string, file fs.FileInfo) (string, error) {
 	data, err := os.ReadFile(filepath.Join(path, file.Name()))
 	if err != nil {
+		println("DIED")
 		return "", err
 	}
 	return string(data), nil
