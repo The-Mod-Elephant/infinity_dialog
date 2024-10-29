@@ -16,7 +16,8 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 type list struct {
-	table table.Model
+	heading string
+	table   table.Model
 }
 
 func generateRows(path string, file fs.FileInfo) *[]table.Row {
@@ -93,10 +94,7 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return l, tea.Quit
 		case "enter":
-			return l, tea.Batch(
-				tea.ClearScrollArea(),
-				tea.Printf("%s", l.table.SelectedRow()[2]),
-			)
+			l.heading = l.table.SelectedRow()[2]
 		}
 	}
 	l.table, cmd = l.table.Update(msg)
@@ -104,5 +102,9 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (l list) View() string {
-	return baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+	if l.heading == "" {
+		return baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+	} else {
+		return l.heading + "\n" + baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+	}
 }

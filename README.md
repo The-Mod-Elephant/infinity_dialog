@@ -6,11 +6,10 @@
 [![](https://img.shields.io/github/actions/workflow/status/dark0dave/infinity_dialog/main.yaml?style=for-the-badge)](https://github.com/dark0dave/infinity_dialog/actions/workflows/main.yaml)
 [![](https://img.shields.io/github/license/dark0dave/infinity_dialog?style=for-the-badge)](./LICENSE)
 
-![](./docs/example.png)
 
 ## Demo
 
-![](./docs/example.webm)
+![](./docs/example.gif)
 
 ## Run
 
