@@ -6,6 +6,7 @@
 [![](https://img.shields.io/github/actions/workflow/status/dark0dave/infinity_dialog/main.yaml?style=for-the-badge)](https://github.com/dark0dave/infinity_dialog/actions/workflows/main.yaml)
 [![](https://img.shields.io/github/license/dark0dave/infinity_dialog?style=for-the-badge)](./LICENSE)
 
+This tool interacts with .tra files used in infinity engine mods. Currently we walk a directory of a mod and allow you to browse the strings.
 
 ## Demo
 

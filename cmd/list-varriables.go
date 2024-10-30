@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,7 +17,7 @@ var baseStyle = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("240"))
 
 type list struct {
-	heading string
+	heading []string
 	table   table.Model
 }
 
@@ -94,7 +95,16 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			return l, tea.Quit
 		case "enter":
-			l.heading = l.table.SelectedRow()[2]
+			l.heading = []string{""}
+			counter := 0
+			for _, s := range strings.Split(l.table.SelectedRow()[2], " ") {
+				counter += len(s)
+				if counter >= 42 {
+					l.heading = append(l.heading, "\n")
+					counter = 0
+				}
+				l.heading = append(l.heading, s)
+			}
 		}
 	}
 	l.table, cmd = l.table.Update(msg)
@@ -102,9 +112,10 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (l list) View() string {
-	if l.heading == "" {
-		return baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+	body := baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+	if len(l.heading) == 0 {
+		return body
 	} else {
-		return l.heading + "\n" + baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+		return baseStyle.Render(l.heading...) + "\n" + body
 	}
 }
