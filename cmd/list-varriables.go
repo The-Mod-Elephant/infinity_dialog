@@ -16,7 +16,7 @@ var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
-type list struct {
+type listVariables struct {
 	heading []string
 	table   table.Model
 }
@@ -36,7 +36,7 @@ func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	return &rows
 }
 
-func NewList(path string) list {
+func NewList(path string) listVariables {
 	columns := []table.Column{
 		{Title: "FileName", Width: 12},
 		{Title: "Id", Width: 4},
@@ -76,12 +76,12 @@ func NewList(path string) list {
 		Bold(false)
 	t.SetStyles(s)
 
-	return list{table: t}
+	return listVariables{table: t}
 }
 
-func (l list) Init() tea.Cmd { return nil }
+func (l listVariables) Init() tea.Cmd { return nil }
 
-func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -111,7 +111,7 @@ func (l list) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return l, cmd
 }
 
-func (l list) View() string {
+func (l listVariables) View() string {
 	body := baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
 	if len(l.heading) == 0 {
 		return body
