@@ -91,6 +91,6 @@ func (d directoryPicker) View() string {
 	}
 
 	s.WriteString("\n\n" + d.filepicker.View() + "\n")
-	s.WriteString(helpStyle.Render("Keys: e->done, escape->./.., q->quit"))
+	s.WriteString(helpStyle.Render("  Keys: e->done, escape->./.., q->quit"))
 	return s.String()
 }

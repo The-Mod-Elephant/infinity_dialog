@@ -17,7 +17,7 @@ func main() {
 		}
 		defer f.Close()
 	}
-	p := tea.NewProgram(cmd.InitialModel())
+	p := tea.NewProgram(cmd.InitialModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)

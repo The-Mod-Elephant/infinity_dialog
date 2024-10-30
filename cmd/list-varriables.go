@@ -68,6 +68,7 @@ func NewList(path string) listVariables {
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("240")).
+		BorderTop(true).
 		BorderBottom(true).
 		Bold(false)
 	s.Selected = s.Selected.
@@ -112,10 +113,13 @@ func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (l listVariables) View() string {
-	body := baseStyle.Render(l.table.View()) + "\n  " + l.table.HelpView() + " enter \n"
+	body := []string{l.table.View(), "\n\n", l.table.HelpView(), " enter"}
 	if len(l.heading) == 0 {
-		return body
+		return baseStyle.Render(body...)
 	} else {
-		return baseStyle.Render(l.heading...) + "\n" + body
+		payload := l.heading
+		payload = append(payload, "\n")
+		payload = append(payload, body...)
+		return baseStyle.Render(payload...)
 	}
 }
