@@ -19,7 +19,7 @@ func main() {
 	}
 	p := tea.NewProgram(cmd.InitialModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		fmt.Printf("Alas, there's been an error: %v", err)
+		fmt.Printf("Alas, there's been an error: %v\n", err)
 		os.Exit(1)
 	}
 }

@@ -1,0 +1,5 @@
+BEGIN ~TEST~
+
+IF ~~ THEN BEGIN 0
+  SAY ~TEST~
+END

@@ -21,7 +21,7 @@ go run ./main.go
 ## Build
 
 ```sh
-go build ./...
+go build -o . ./...
 ```
 
 ## Test
@@ -33,6 +33,7 @@ go test ./...
 ## Debug
 
 ```sh
-dlv debug --headless --api-version=2 --listen=127.0.0.1:2345
+go install github.com/go-delve/delve/cmd/dlv@latest
+dlv debug --headless --api-version=2 --listen=0.0.0.0:2345 || reset
 ```
 Then attach in vscodium
