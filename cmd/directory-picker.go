@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,19 +18,25 @@ var (
 
 type directoryPicker struct {
 	filepicker   filepicker.Model
+	nextCommand  func(string) (tea.Model, tea.Cmd)
+	message      string
 	selectedFile string
 	quitting     bool
 	err          error
 }
 
-func NewDirectoryPicker() directoryPicker {
+func NewDirectoryPicker(dir bool, message string, nextCommand func(string) (tea.Model, tea.Cmd)) directoryPicker {
 	fp := filepicker.New()
-	fp.DirAllowed = true
-	fp.FileAllowed = false
-	fp.Height = 5
-	fp.CurrentDirectory, _ = os.Getwd()
+	fp.DirAllowed = dir
+	fp.FileAllowed = !dir
+	h, _ := docStyle.GetFrameSize()
+	fp.Height = height - h - 5
+	fp.AutoHeight = true
+	fp.CurrentDirectory = currentDirectory
 	return directoryPicker{
-		filepicker: fp,
+		filepicker:  fp,
+		nextCommand: nextCommand,
+		message:     message,
 	}
 }
 
@@ -47,12 +54,14 @@ func (d directoryPicker) Init() tea.Cmd {
 
 func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		h, _ := docStyle.GetFrameSize()
+		d.filepicker.Height = d.filepicker.Height - h
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "e":
 			if d.selectedFile != "" {
-				l := NewList(d.selectedFile)
-				return l, l.Init()
+				return d.nextCommand(d.selectedFile)
 			}
 		case "ctrl+c", "q":
 			d.quitting = true
@@ -85,9 +94,15 @@ func (d directoryPicker) View() string {
 	if d.err != nil {
 		s.WriteString(d.filepicker.Styles.DisabledFile.Render(d.err.Error()))
 	} else if d.selectedFile == "" {
-		s.WriteString("Pick a directory:\n")
+		s.WriteString(d.message + "\n")
 	} else {
-		s.WriteString("Selected directory: " + d.filepicker.Styles.Selected.Render(d.selectedFile))
+		fileInfo, _ := os.Stat(d.selectedFile)
+		if fileInfo.IsDir() {
+			currentDirectory = d.selectedFile
+		} else {
+			currentDirectory = filepath.Dir(d.selectedFile)
+		}
+		s.WriteString("Selected: " + d.filepicker.Styles.Selected.Render(d.selectedFile))
 	}
 
 	s.WriteString("\n\n" + d.filepicker.View() + "\n")

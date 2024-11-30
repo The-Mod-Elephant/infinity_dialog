@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"io/fs"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/dark0dave/infinity_dialog/pkg/translation"
+	"github.com/dark0dave/infinity_dialog/pkg/util"
 )
 
 var baseStyle = lipgloss.NewStyle().
@@ -23,14 +23,19 @@ type listVariables struct {
 
 func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	rows := []table.Row{}
-	fileContent, err := os.ReadFile(path)
+	fileContent, err := util.ReadFileToString(filepath.Join(path, file.Name()))
 	if err != nil {
 		return &rows
 	}
-	variables, err := translation.FromFileContents(string(fileContent))
+	variables, err := translation.FromFileContents(fileContent)
 	if err == nil {
+		lang_path := strings.Split(path, "/")
+		lang := ""
+		if len(lang_path) > 2 {
+			lang = lang_path[len(lang_path)-2]
+		}
 		for _, v := range *variables {
-			rows = append(rows, table.Row{file.Name(), v.Identifier, v.Value})
+			rows = append(rows, table.Row{file.Name(), lang, v.Identifier, v.Value})
 		}
 	}
 	return &rows
@@ -39,6 +44,7 @@ func generateRows(path string, file fs.FileInfo) *[]table.Row {
 func NewList(path string) listVariables {
 	columns := []table.Column{
 		{Title: "FileName", Width: 12},
+		{Title: "Lang", Width: 8},
 		{Title: "Id", Width: 4},
 		{Title: "Value", Width: 40},
 	}

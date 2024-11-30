@@ -25,11 +25,18 @@ func GetFiles(path string, ext string) []fs.FileInfo {
 	return out
 }
 
-func ReadFile(path string, file fs.FileInfo) (string, error) {
-	data, err := os.ReadFile(filepath.Join(path, file.Name()))
+func ReadFile(path string) (*[]byte, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		println("DIED")
+		return nil, err
+	}
+	return &data, nil
+}
+
+func ReadFileToString(path string) (string, error) {
+	data, err := ReadFile(path)
+	if err != nil {
 		return "", err
 	}
-	return string(data), nil
+	return string(*data), nil
 }
