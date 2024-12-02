@@ -3,6 +3,11 @@ package translation
 import (
 	"errors"
 	"fmt"
+	"unicode"
+
+	"golang.org/x/text/runes"
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 var (
@@ -36,6 +41,14 @@ func (v *Variable) end() int {
 	return v.valueEnd
 }
 
+func ToAscii(str string) string {
+	result, _, err := transform.String(transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn))), str)
+	if err != nil {
+		return ""
+	}
+	return result
+}
+
 func FromString(s string, start int) (*Variable, error) {
 	v := &Variable{}
 	for i := start; i < len(s); i++ {
@@ -59,7 +72,7 @@ func FromString(s string, start int) (*Variable, error) {
 		// "~" is 126
 		if v.isRecording() && s[i] == 126 {
 			v.valueEnd = i
-			v.Value = s[v.valueStart:v.valueEnd]
+			v.Value = ToAscii(s[v.valueStart:v.valueEnd])
 			v.toggleRecording()
 			break
 		}
