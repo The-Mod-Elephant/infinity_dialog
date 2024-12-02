@@ -86,9 +86,7 @@ func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "e", "enter":
 			nodes := n.tree.Nodes()
 			node, _ := getSelected(&n, &nodes, 0)
-			f := NewFileViewFromFile(node.Desc, func() (tea.Model, tea.Cmd) {
-				return n, nil
-			})
+			f := NewFileView(node.Desc)
 			return f, f.Init()
 		}
 	}

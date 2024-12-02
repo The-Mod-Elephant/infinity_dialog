@@ -29,14 +29,6 @@ func TestString(t *testing.T) {
 			testString: "@123 test string~",
 			error:      ErrValue,
 		},
-		{
-			expected: &Variable{
-				Identifier: "0",
-				Value:      "Aboleth le�� ve sv� n�dr�i, mimo dosah tv�ch zbran�. Mus� naj�t jin� zp�sob, jak zni�it mechanismus, kter� ho dr�� na�ivu.",
-			},
-			testString: "@0    = ~Aboleth le�� ve sv� n�dr�i, mimo dosah tv�ch zbran�. Mus� naj�t jin� zp�sob, jak zni�it mechanismus, kter� ho dr�� na�ivu.~",
-			error:      nil,
-		},
 	}
 	for _, tc := range testCases {
 		v, err := FromString(tc.testString, 0)

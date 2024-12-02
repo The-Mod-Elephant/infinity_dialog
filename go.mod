@@ -8,7 +8,6 @@ require (
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/dark0dave/infinity_file_formats v0.0.0-20241126215235-54369c958d54
 	github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e
-	golang.org/x/text v0.3.8
 )
 
 require (
@@ -31,4 +30,5 @@ require (
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
+	golang.org/x/text v0.3.8 // indirect
 )

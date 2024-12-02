@@ -6,11 +6,23 @@
 [![](https://img.shields.io/github/actions/workflow/status/dark0dave/infinity_dialog/main.yaml?style=for-the-badge)](https://github.com/dark0dave/infinity_dialog/actions/workflows/main.yaml)
 [![](https://img.shields.io/github/license/dark0dave/infinity_dialog?style=for-the-badge)](./LICENSE)
 
-This tool interacts with .tra files used in infinity engine mods. Currently we walk a directory of a mod and allow you to browse the strings.
+This tool has 2 features, traverse and discover. Traverse walks over a bg mod and shows you the tree of paths through the files. Discover shows all the strings for all languages and where they are set.
 
-## Demo
+### Traverse
 
-![](./docs/example.gif)
+This feature lets you see the paths through your mod by parsing the area + baf files.
+
+#### Demo
+
+![](./docs/traverse.gif)
+
+### Discover
+
+This feature interacts with .tra files used in infinity engine mods. Currently we walk a directory of a mod and allow you to browse the strings.
+
+#### Demo
+
+![](./docs/discover.gif)
 
 ## Run
 
