@@ -23,13 +23,6 @@ body = """\
             {% else %} by [{{ commit.author.name }}](https://github.com/{{ commit.author.name }}){%- endif %}\
     {%- endfor -%}
 {% endfor %}
-{% if version %}
-    {% if previous.version %}\
-Full Changelog: [{{ previous.version }}...{{ version }}]({{ self::remote_url() }}/compare/{{ previous.version }}...{{ version }})\
-    {% endif %}\
-{% else -%}\
-  {% raw %}\n{% endraw %}\
-{% endif %}\
 {% if github.contributors | filter(attribute="is_first_time", value=true) | length != 0 %}
 ### New Contributors
 {% for contributor in github.contributors | filter(attribute="is_first_time", value=true) %}
