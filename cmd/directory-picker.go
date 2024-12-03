@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
+	helpStyle = lipgloss.NewStyle().Padding(1, 0, 0, 2).Foreground(lipgloss.Color("241"))
 )
 
 type directoryPicker struct {
@@ -25,6 +25,7 @@ type directoryPicker struct {
 	err          error
 }
 
+// TODO: Hide unselectable
 func NewDirectoryPicker(dir bool, message string, nextCommand func(string) (tea.Model, tea.Cmd)) directoryPicker {
 	fp := filepicker.New()
 	fp.DirAllowed = dir
@@ -32,6 +33,7 @@ func NewDirectoryPicker(dir bool, message string, nextCommand func(string) (tea.
 	h, _ := docStyle.GetFrameSize()
 	fp.Height = height - h - 5
 	fp.AutoHeight = true
+	fp.ShowHidden = false
 	fp.CurrentDirectory = currentDirectory
 	return directoryPicker{
 		filepicker:  fp,
@@ -63,7 +65,7 @@ func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if d.selectedFile != "" {
 				return d.nextCommand(d.selectedFile)
 			}
-		case "ctrl+c", "q":
+		case "ctrl+c", "q", "esc":
 			d.quitting = true
 			return d, tea.Quit
 		}
@@ -106,6 +108,6 @@ func (d directoryPicker) View() string {
 	}
 
 	s.WriteString("\n\n" + d.filepicker.View() + "\n")
-	s.WriteString(helpStyle.Render("  Keys: e->done, escape->./.., q->quit"))
+	s.WriteString(helpStyle.Render("e done • <-/-> move • q quit"))
 	return s.String()
 }
