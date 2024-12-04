@@ -32,21 +32,19 @@ type fileview struct {
 	title    string
 	content  string
 	viewport viewport.Model
-	callback func() (tea.Model, tea.Cmd)
 }
 
-func NewFileView(content string, title string, callback func() (tea.Model, tea.Cmd)) fileview {
-	f := fileview{title: title, content: content, callback: callback}
+func NewFileView() fileview {
+	f := fileview{}
 	headerHeight := lipgloss.Height(f.headerView())
 	footerHeight := lipgloss.Height(f.footerView())
 	verticalMarginHeight := headerHeight + footerHeight
 	f.viewport = viewport.New(width, height-verticalMarginHeight)
 	f.viewport.YPosition = headerHeight
-	f.viewport.SetContent(f.content)
 	return f
 }
 
-func NewFileViewFromFile(path string, callback func() (tea.Model, tea.Cmd)) fileview {
+func GetFileContents(path string) (string, string) {
 	content := ""
 	if filepath.Ext(path) == ".are" {
 		f, err := os.Open(path)
@@ -68,7 +66,7 @@ func NewFileViewFromFile(path string, callback func() (tea.Model, tea.Cmd)) file
 			content = ""
 		}
 	}
-	return NewFileView(content, filepath.Base(path), callback)
+	return content, filepath.Base(path)
 }
 
 func (f fileview) Init() tea.Cmd {
@@ -76,18 +74,31 @@ func (f fileview) Init() tea.Cmd {
 }
 
 func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
+	case ContentMsg:
+		f.content = string(msg)
+		f.viewport.SetContent(f.content)
+		return f, nil
+	case TitleMsg:
+		f.title = string(msg)
+		return f, nil
+	case PathMsg:
+		content, title := GetFileContents(string(msg))
+		f.content = content
+		f.viewport.SetContent(f.content)
+		f.title = title
+		return f, nil
 	case tea.KeyMsg:
-		if k := msg.String(); k == "ctrl+c" || k == "q" || k == "esc" {
-			return f.callback()
+		switch msg.String() {
+		case "q", "esc":
+			return state.PreviousCommand(), nil
+		case "ctrl+c", "ctrl+d":
+			return f, tea.Quit
 		}
-
 	case tea.WindowSizeMsg:
 		setViewport(f, msg)
 	}
-
+	var cmd tea.Cmd
 	f.viewport, cmd = f.viewport.Update(msg)
 	return f, cmd
 }

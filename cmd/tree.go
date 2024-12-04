@@ -16,6 +16,7 @@ import (
 
 type nested struct {
 	tree      tree.Model
+	file_map  *map[string]string
 	paginator paginator.Model
 }
 
@@ -23,43 +24,43 @@ func (m nested) Init() tea.Cmd {
 	return nil
 }
 
-func NewTree(dirpath string, areapath string) nested {
+func NewTree() nested {
 	h, w := docStyle.GetFrameSize()
 	_, right, _, left := docStyle.GetPadding()
 	w = w - left - right
 	h = height - h
 
-	// Cache file map
-	file_map := map[string]string{}
-	err := filepath.Walk(dirpath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		// Only search baf + are files
-		if !info.IsDir() && (filepath.Ext(info.Name()) == ".are" || filepath.Ext(info.Name()) == ".baf") {
-			file_map[strings.ToLower(info.Name())] = path
-		}
-		return nil
-	})
-	if err != nil {
-	}
-
-	nodes := []tree.Node{}
-	parseArea(&nodes, areapath, &file_map)
-
-	// Pagniate
+	// Paginate
 	p := paginator.New()
 	p.Type = paginator.Dots
 	p.PerPage = height - 5
 	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
 	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
-	p.SetTotalPages(size(&nodes))
 
-	return nested{tree: tree.New(nodes, w, h), paginator: p}
+	return nested{tree: tree.New([]tree.Node{}, w, h), paginator: p}
 }
 
 func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case PathMsg:
+		file_map := map[string]string{}
+		filepath.Walk(string(msg), func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			// Only search baf + are files
+			if !info.IsDir() && (filepath.Ext(info.Name()) == ".are" || filepath.Ext(info.Name()) == ".baf") {
+				file_map[strings.ToLower(info.Name())] = path
+			}
+			return nil
+		})
+		n.file_map = &file_map
+	case SelectedFilePath:
+		nodes := []tree.Node{}
+		parseArea(&nodes, string(msg), n.file_map)
+		n.paginator.SetTotalPages(size(&nodes))
+		n.tree.SetNodes(nodes)
+		return n, n.Init()
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
 		n.tree.SetSize(msg.Width-h, msg.Height-v)
@@ -81,21 +82,23 @@ func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if cusor != n.paginator.PerPage*n.paginator.TotalPages && (cusor+1)%(n.paginator.PerPage) == 0 {
 				n.paginator.NextPage()
 			}
-		case "q", "ctrl+c", "ctrl+d", "esc":
-			return n, tea.Quit
 		case "e", "enter":
 			nodes := n.tree.Nodes()
 			node, _ := getSelected(&n, &nodes, 0)
-			f := NewFileViewFromFile(node.Desc, func() (tea.Model, tea.Cmd) {
-				return n, nil
-			})
-			return f, f.Init()
+			return state.SetAndGetNextCommand(n), sendPathCmd(node.Desc)
+		case "q", "esc":
+			return state.next.SetAndGetPreviousCommand(n), nil
+		case "ctrl+c", "ctrl+d":
+			return n, tea.Quit
 		}
 	}
-	var cmd tea.Cmd
-	n.tree, cmd = n.tree.Update(msg)
-	n.paginator, cmd = n.paginator.Update(msg)
-	return n, cmd
+	var (
+		pag_cmd  tea.Cmd
+		tree_cmd tea.Cmd
+	)
+	n.tree, tree_cmd = n.tree.Update(msg)
+	n.paginator, pag_cmd = n.paginator.Update(msg)
+	return n, tea.Batch(pag_cmd, tree_cmd)
 }
 
 func (n nested) View() string {
@@ -109,7 +112,7 @@ func (n nested) View() string {
 	}
 	b.WriteString("  " + n.paginator.View())
 	b.WriteString("\n\n  h/l ←/→ page • q: quit\n")
-	return b.String()
+	return n.tree.Styles.Shapes.Render(b.String())
 }
 
 func getSelected(n *nested, nodes *[]tree.Node, counter int) (*tree.Node, int) {
