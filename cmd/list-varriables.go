@@ -36,31 +36,16 @@ func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	return &rows
 }
 
-func NewList(path string) listVariables {
+func NewList() listVariables {
 	columns := []table.Column{
 		{Title: "FileName", Width: int(0.2 * float64(width))},
 		{Title: "Lang", Width: int(0.1 * float64(width))},
 		{Title: "Id", Width: int(0.05 * float64(width))},
 		{Title: "Value", Width: int(0.55 * float64(width))},
 	}
-	rows := []table.Row{}
-	filepath.WalkDir(path, func(path string, file fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		ext := filepath.Ext(file.Name())
-		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
-			info, _ := file.Info()
-			file_rows := *generateRows(path, info)
-			rows = append(rows, file_rows...)
-		}
-
-		return nil
-	})
 
 	t := table.New(
 		table.WithColumns(columns),
-		table.WithRows(rows),
 		table.WithFocused(true),
 		table.WithHeight(height-7),
 	)
@@ -81,11 +66,32 @@ func NewList(path string) listVariables {
 	return listVariables{table: t}
 }
 
+func (l listVariables) readPath(path string) *[]table.Row {
+	rows := []table.Row{}
+	filepath.WalkDir(path, func(path string, file fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		ext := filepath.Ext(file.Name())
+		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
+			info, _ := file.Info()
+			file_rows := *generateRows(path, info)
+			rows = append(rows, file_rows...)
+		}
+
+		return nil
+	})
+	return &rows
+}
+
 func (l listVariables) Init() tea.Cmd { return nil }
 
 func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case SelectedFilePath:
+		rows := l.readPath(string(msg))
+		l.table.SetRows(*rows)
+		return l, nil
 	case tea.WindowSizeMsg:
 		h, w := docStyle.GetFrameSize()
 		h1, w1 := baseStyle.GetFrameSize()
@@ -106,13 +112,9 @@ func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "esc":
-			if l.table.Focused() {
-				l.table.Blur()
-			} else {
-				l.table.Focus()
-			}
-		case "q", "ctrl+c", "ctrl+d":
+		case "q", "esc":
+			return state.PreviousCommand(), nil
+		case "ctrl+c", "ctrl+d":
 			return l, tea.Quit
 		case "enter":
 			content := ""
@@ -128,12 +130,11 @@ func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				content += s
 			}
 			title := strings.Join(l.table.SelectedRow()[:3], " ")
-			f := NewFileView(content, title, func() (tea.Model, tea.Cmd) {
-				return l, cmd
-			})
-			return f, f.Init()
+			state.setCurrentCommand(l)
+			return state.NextCommand(), tea.Batch(sendTitleCmd(title), sendContentCmd(content))
 		}
 	}
+	var cmd tea.Cmd
 	l.table, cmd = l.table.Update(msg)
 	return l, cmd
 }

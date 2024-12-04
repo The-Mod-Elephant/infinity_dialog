@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -18,15 +16,15 @@ var (
 
 type directoryPicker struct {
 	filepicker   filepicker.Model
-	nextCommand  func(string) (tea.Model, tea.Cmd)
 	message      string
 	selectedFile string
+	startingDir  string
 	quitting     bool
 	err          error
 }
 
 // TODO: Hide unselectable
-func NewDirectoryPicker(dir bool, message string, nextCommand func(string) (tea.Model, tea.Cmd)) directoryPicker {
+func NewDirectoryPicker(dir bool, message string) directoryPicker {
 	fp := filepicker.New()
 	fp.DirAllowed = dir
 	fp.FileAllowed = !dir
@@ -34,11 +32,9 @@ func NewDirectoryPicker(dir bool, message string, nextCommand func(string) (tea.
 	fp.Height = height - h - 5
 	fp.AutoHeight = true
 	fp.ShowHidden = false
-	fp.CurrentDirectory = currentDirectory
 	return directoryPicker{
-		filepicker:  fp,
-		nextCommand: nextCommand,
-		message:     message,
+		filepicker: fp,
+		message:    message,
 	}
 }
 
@@ -56,6 +52,10 @@ func (d directoryPicker) Init() tea.Cmd {
 
 func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case SelectedFilePath:
+		d.filepicker.CurrentDirectory = string(msg)
+		d.startingDir = string(msg)
+		return d, d.Init()
 	case tea.WindowSizeMsg:
 		h, _ := docStyle.GetFrameSize()
 		d.filepicker.Height = d.filepicker.Height - h
@@ -63,9 +63,11 @@ func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "e":
 			if d.selectedFile != "" {
-				return d.nextCommand(d.selectedFile)
+				return state.SetAndGetNextCommand(d), tea.Sequence(sendPathCmd(d.startingDir), sendSelectedFile(d.selectedFile))
 			}
-		case "ctrl+c", "q", "esc":
+		case "q", "esc":
+			return state.PreviousCommand(), nil
+		case "ctrl+c", "ctrl+d":
 			d.quitting = true
 			return d, tea.Quit
 		}
@@ -95,16 +97,11 @@ func (d directoryPicker) View() string {
 
 	if d.err != nil {
 		s.WriteString(d.filepicker.Styles.DisabledFile.Render(d.err.Error()))
-	} else if d.selectedFile == "" {
-		s.WriteString(d.message + "\n")
 	} else {
-		fileInfo, _ := os.Stat(d.selectedFile)
-		if fileInfo.IsDir() {
-			currentDirectory = d.selectedFile
-		} else {
-			currentDirectory = filepath.Dir(d.selectedFile)
-		}
-		s.WriteString("Selected: " + d.filepicker.Styles.Selected.Render(d.selectedFile))
+		s.WriteString(d.message + "\n")
+	}
+	if d.selectedFile != "" {
+		s.WriteString("  Selected: " + d.filepicker.Styles.Selected.Render(d.selectedFile))
 	}
 
 	s.WriteString("\n\n" + d.filepicker.View() + "\n")

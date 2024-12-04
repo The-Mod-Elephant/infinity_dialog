@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	docStyle            = lipgloss.NewStyle().Margin(1, 2)
-	currentDirectory, _ = os.Getwd()
-	width               = 0
-	height              = 0
+	state    = NewState()
+	docStyle = lipgloss.NewStyle().Margin(1, 2)
+	width    = 0
+	height   = 0
 )
 
 type item struct {
@@ -56,25 +56,26 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		height, width = max(msg.Height, height), max(msg.Width, width)
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c", "ctrl+d", "q":
 			return i, tea.Quit
 		case "enter", " ":
+			current_path, err := os.Getwd()
+			if err != nil {
+				return i, tea.Quit
+			}
 			switch i.list.SelectedItem().FilterValue() {
 			case "Traverse":
-				d := NewDirectoryPicker(true, "Select a Mod Directory", func(dirpath string) (tea.Model, tea.Cmd) {
-					f := NewDirectoryPicker(false, "Select an area to start", func(areapath string) (tea.Model, tea.Cmd) {
-						t := NewTree(dirpath, areapath)
-						return t, t.Init()
-					})
-					return f, f.Init()
-				})
-				return d, d.Init()
+				d := NewDirectoryPicker(true, "Select a Mod Directory")
+				f := NewDirectoryPicker(false, "Select an area to start")
+				t := NewTree()
+				state.SetNextCommand(d).SetNextCommand(f).SetNextCommand(t)
+				return state.SetAndGetNextCommand(i), sendSelectedFile(current_path)
 			case "Discover":
-				d := NewDirectoryPicker(true, "Select a Mod Directory", func(path string) (tea.Model, tea.Cmd) {
-					l := NewList(path)
-					return l, l.Init()
-				})
-				return d, d.Init()
+				d := NewDirectoryPicker(true, "Select a Mod Directory")
+				l := NewList()
+				f := NewFileView()
+				state.SetNextCommand(d).SetNextCommand(l).SetNextCommand(f)
+				return state.SetAndGetNextCommand(i), sendSelectedFile(current_path)
 			}
 		}
 	}
