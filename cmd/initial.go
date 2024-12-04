@@ -68,7 +68,8 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
 				f := NewDirectoryPicker(false, "Select an area to start")
 				t := NewTree()
-				state.SetNextCommand(d).SetNextCommand(f).SetNextCommand(t)
+				v := NewFileView()
+				state.SetNextCommand(d).SetNextCommand(f).SetNextCommand(t).SetNextCommand(v)
 				return state.SetAndGetNextCommand(i), sendSelectedFile(current_path)
 			case "Discover":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")

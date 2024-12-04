@@ -75,19 +75,19 @@ func (f fileview) Init() tea.Cmd {
 
 func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case ContentMsg:
-		f.content = string(msg)
-		f.viewport.SetContent(f.content)
-		return f, nil
 	case TitleMsg:
 		f.title = string(msg)
 		return f, nil
+	case ContentMsg:
+		f.content = string(msg)
+		f.viewport.SetContent(f.content)
+		return f, f.Init()
 	case PathMsg:
 		content, title := GetFileContents(string(msg))
 		f.content = content
 		f.viewport.SetContent(f.content)
 		f.title = title
-		return f, nil
+		return f, f.Init()
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc":
