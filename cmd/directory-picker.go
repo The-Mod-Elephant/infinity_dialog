@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"time"
 
@@ -62,8 +63,14 @@ func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "e":
+			fileInfo, err := os.Stat(d.selectedFile)
+			if fileInfo.IsDir() != d.filepicker.DirAllowed || err != nil {
+				d.err = errors.New(d.selectedFile + " is not valid.")
+				d.selectedFile = ""
+				return d, clearErrorAfter(2 * time.Second)
+			}
 			if d.selectedFile != "" {
-				return state.SetAndGetNextCommand(d), tea.Sequence(sendPathCmd(d.startingDir), sendSelectedFile(d.selectedFile))
+				return state.SetAndGetNextCommand(d), tea.Sequence(SendPathCmd(d.startingDir), SendSelectedFile(d.selectedFile))
 			}
 		case "q", "esc":
 			return state.PreviousCommand(), nil

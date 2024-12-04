@@ -6,10 +6,11 @@ import (
 	list "github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dark0dave/infinity_dialog/pkg/nav"
 )
 
 var (
-	state    = NewState()
+	state    = nav.NewState()
 	docStyle = lipgloss.NewStyle().Margin(1, 2)
 	width    = 0
 	height   = 0
@@ -70,13 +71,13 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				t := NewTree()
 				v := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(f).SetNextCommand(t).SetNextCommand(v)
-				return state.SetAndGetNextCommand(i), sendSelectedFile(current_path)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			case "Discover":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
 				l := NewList()
 				f := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(l).SetNextCommand(f)
-				return state.SetAndGetNextCommand(i), sendSelectedFile(current_path)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			}
 		}
 	}
