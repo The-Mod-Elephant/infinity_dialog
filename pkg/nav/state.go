@@ -1,22 +1,22 @@
-package cmd
+package nav
 
 import tea "github.com/charmbracelet/bubbletea"
 
 var position = 0
 
-type State struct {
+type state struct {
 	model    tea.Model
-	next     *State
-	previous *State
+	next     *state
+	previous *state
 }
 
-func NewState() *State {
-	return &State{}
+func NewState() *state {
+	return &state{}
 }
 
-func (s *State) setCurrentCommand(m tea.Model) {
+func (s *state) setCurrentCommand(m tea.Model) {
 	if s.model == nil {
-		*s = State{
+		*s = state{
 			model:    m,
 			next:     s.next,
 			previous: s.previous,
@@ -30,7 +30,7 @@ func (s *State) setCurrentCommand(m tea.Model) {
 	s.model = m
 }
 
-func (s *State) NextCommand() tea.Model {
+func (s *state) NextCommand() tea.Model {
 	position += 1
 	for range position {
 		if s.next != nil {
@@ -41,9 +41,9 @@ func (s *State) NextCommand() tea.Model {
 	return m
 }
 
-func (s *State) SetNextCommand(m tea.Model) *State {
+func (s *state) SetNextCommand(m tea.Model) *state {
 	if s.next == nil {
-		s.next = &State{
+		s.next = &state{
 			model:    m,
 			next:     nil,
 			previous: s,
@@ -54,12 +54,12 @@ func (s *State) SetNextCommand(m tea.Model) *State {
 	}
 }
 
-func (s *State) SetAndGetNextCommand(m tea.Model) tea.Model {
+func (s *state) SetAndGetNextCommand(m tea.Model) tea.Model {
 	s.setCurrentCommand(m)
 	return s.NextCommand()
 }
 
-func (s *State) PreviousCommand() tea.Model {
+func (s *state) PreviousCommand() tea.Model {
 	position -= 1
 	for range position {
 		if s.next != nil {
@@ -70,9 +70,9 @@ func (s *State) PreviousCommand() tea.Model {
 	return m
 }
 
-func (s *State) SetPreviousCommand(m tea.Model) *State {
+func (s *state) SetPreviousCommand(m tea.Model) *state {
 	if s.previous == nil {
-		s.previous = &State{
+		s.previous = &state{
 			model:    m,
 			next:     s,
 			previous: nil,
@@ -83,7 +83,7 @@ func (s *State) SetPreviousCommand(m tea.Model) *State {
 	}
 }
 
-func (s *State) SetAndGetPreviousCommand(m tea.Model) tea.Model {
+func (s *state) SetAndGetPreviousCommand(m tea.Model) tea.Model {
 	s.setCurrentCommand(m)
 	return s.PreviousCommand()
 }

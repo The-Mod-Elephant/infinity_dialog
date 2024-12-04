@@ -85,9 +85,9 @@ func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "e", "enter":
 			nodes := n.tree.Nodes()
 			node, _ := getSelected(&n, &nodes, 0)
-			return state.SetAndGetNextCommand(n), sendPathCmd(node.Desc)
+			return state.SetAndGetNextCommand(n), SendPathCmd(node.Desc)
 		case "q", "esc":
-			return state.next.SetAndGetPreviousCommand(n), nil
+			return state.SetAndGetPreviousCommand(n), nil
 		case "ctrl+c", "ctrl+d":
 			return n, tea.Quit
 		}

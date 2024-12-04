@@ -130,8 +130,7 @@ func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				content += s
 			}
 			title := strings.Join(l.table.SelectedRow()[:3], " ")
-			state.setCurrentCommand(l)
-			return state.NextCommand(), tea.Sequence(sendTitleCmd(title), sendContentCmd(content))
+			return state.SetAndGetNextCommand(l), tea.Sequence(SendTitleCmd(title), SendContentCmd(content))
 		}
 	}
 	var cmd tea.Cmd
