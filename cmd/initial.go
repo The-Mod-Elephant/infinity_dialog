@@ -32,6 +32,7 @@ func InitialModel() initial {
 	items := []list.Item{
 		item{title: "Traverse", desc: "Show tree of locations through a mod"},
 		item{title: "Discover", desc: "Find all strings in a mod/directory"},
+		item{title: "View", desc: "View any Infinity Engine file or text file"},
 		// TODO: Implement these
 		// item{title: "Add", desc: "Add strings to tra"},
 		// item{title: "Range", desc: "What range of numbers are free"},
@@ -60,6 +61,7 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "ctrl+d", "q":
 			return i, tea.Quit
 		case "enter", " ":
+			state = nav.NewState()
 			current_path, err := os.Getwd()
 			if err != nil {
 				return i, tea.Quit
@@ -77,6 +79,11 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				l := NewList()
 				f := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(l).SetNextCommand(f)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
+			case "View":
+				d := NewDirectoryPicker(false, "Select a file to start")
+				v := NewFileView()
+				state.SetNextCommand(d).SetNextCommand(v)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			}
 		}

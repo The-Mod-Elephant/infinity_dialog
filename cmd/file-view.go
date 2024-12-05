@@ -45,12 +45,14 @@ func NewFileView() fileview {
 }
 
 func GetFileContents(path string) (string, string) {
+	dir := filepath.Base(path)
 	content := ""
-	if filepath.Ext(path) == ".are" {
-		f, err := os.Open(path)
-		if err != nil {
-		}
-		defer f.Close()
+	f, err := os.Open(path)
+	if err != nil {
+	}
+	defer f.Close()
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".are":
 		area, err := bg.OpenArea(f)
 		if err != nil {
 		}
@@ -59,14 +61,71 @@ func GetFileContents(path string) (string, string) {
 		if err != nil {
 		}
 		content = buf.String()
-	} else {
-		var err error
+	case ".bam":
+		bam, err := bg.OpenBAM(f, nil)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		err = bam.WriteJson(buf)
+		if err != nil {
+		}
+		content = buf.String()
+	case ".cre":
+		cre, err := bg.OpenCre(f)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		err = cre.WriteJson(buf)
+		if err != nil {
+		}
+		content = buf.String()
+	case ".dlg":
+		dlg, err := bg.OpenDlg(f)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		err = dlg.WriteJson(buf)
+		if err != nil {
+		}
+		content = buf.String()
+	case ".eff":
+		effv1, effv2, err := bg.OpenEff(f)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		if effv1 != nil {
+			err = effv1.WriteJson(buf)
+		} else {
+			err = effv2.WriteJson(buf)
+		}
+		if err != nil {
+		}
+		content = buf.String()
+	case ".itm":
+		item, err := bg.OpenITM(f)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		err = item.WriteJson(buf)
+		if err != nil {
+		}
+		content = buf.String()
+	case ".spl":
+		dlg, err := bg.OpenSPL(f)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		err = dlg.WriteJson(buf)
+		if err != nil {
+		}
+		content = buf.String()
+	default:
 		content, err = util.ReadFileToString(path)
 		if err != nil {
-			content = ""
+			return content, dir
 		}
 	}
-	return content, filepath.Base(path)
+	return content, dir
 }
 
 func (f fileview) Init() tea.Cmd {
@@ -81,6 +140,12 @@ func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ContentMsg:
 		f.content = string(msg)
 		f.viewport.SetContent(f.content)
+		return f, f.Init()
+	case SelectedFilePath:
+		content, title := GetFileContents(string(msg))
+		f.content = content
+		f.viewport.SetContent(f.content)
+		f.title = title
 		return f, f.Init()
 	case PathMsg:
 		content, title := GetFileContents(string(msg))
