@@ -24,6 +24,22 @@ This feature interacts with .tra files used in infinity engine mods. Currently w
 
 ![](./docs/discover.gif)
 
+### View
+
+This feature read infinity engine files and text files. Here is a list of infinity engine file extensions is supported:
+- .are
+- .bam
+- .cre
+- .dlg
+- .eff
+- .itm
+- .spl
+
+#### Demo
+
+![](./docs/view.gif)
+
+
 ## Run
 
 ```sh
