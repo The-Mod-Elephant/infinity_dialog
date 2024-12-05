@@ -6,7 +6,11 @@
 [![](https://img.shields.io/github/actions/workflow/status/dark0dave/infinity_dialog/main.yaml?style=for-the-badge)](https://github.com/dark0dave/infinity_dialog/actions/workflows/main.yaml)
 [![](https://img.shields.io/github/license/dark0dave/infinity_dialog?style=for-the-badge)](./LICENSE)
 
-This tool has 2 features, traverse and discover. Traverse walks over a bg mod and shows you the tree of paths through the files. Discover shows all the strings for all languages and where they are set.
+This tool has 3 features, [Traverse](#traverse), [Discover](#discover) and [View](#view).
+
+- [Traverse](#traverse) walks over a bg mod and shows you the tree of paths through the files.
+- [Discover](#discover) shows all the strings for all languages and where they are set.
+- [View](#view) can read a collection of infinity file formats and text files involved in weidu mods.
 
 ### Traverse
 
@@ -29,6 +33,7 @@ This feature interacts with .tra files used in infinity engine mods. Currently w
 This feature read infinity engine files and text files. Here is a list of infinity engine file extensions is supported:
 - .are
 - .bam
+- .baf
 - .cre
 - .dlg
 - .eff
