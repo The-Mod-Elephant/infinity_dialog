@@ -22,7 +22,7 @@ type listVariables struct {
 
 func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	rows := []table.Row{}
-	fileContent, err := util.ReadFileToString(path)
+	fileContent, err := util.ReadFileToSlice(path)
 	if err != nil {
 		return &rows
 	}
