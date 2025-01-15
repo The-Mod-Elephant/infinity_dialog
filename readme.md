@@ -8,8 +8,9 @@
 
 This tool has 3 features, [Traverse](#traverse), [Discover](#discover) and [View](#view).
 
-- [Traverse](#traverse) walks over a bg mod and shows you the tree of paths through the files.
+- [Check](#check) shows missing string for tra, files, ie if a string is missing for english but not in french.
 - [Discover](#discover) shows all the strings for all languages and where they are set.
+- [Traverse](#traverse) walks over a bg mod and shows you the tree of paths through the files.
 - [View](#view) can read a collection of infinity file formats and text files involved in weidu mods.
 
 ### Traverse

@@ -1,8 +1,12 @@
 package cmd
 
 import (
+	"cmp"
+	"fmt"
 	"io/fs"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -13,7 +17,9 @@ import (
 )
 
 type checkVariables struct {
-	table table.Model
+	table     table.Model
+	loadFiles map[string]map[string]string
+	root      string
 }
 
 func NewCheck() checkVariables {
@@ -60,24 +66,33 @@ func difference(slice1 *[]string, slice2 *[]string) *[]string {
 			diff = append(diff, k)
 		}
 	}
+	slices.SortFunc(diff, func(a, b string) int {
+		v1, _ := strconv.Atoi(a)
+		v2, _ := strconv.Atoi(b)
+		return cmp.Compare(v1, v2)
+	})
 	return &diff
 }
 
-func genRows(path string) *[]table.Row {
+func (c checkVariables) genRows() *[]table.Row {
 	rows := map[string]map[string][]string{}
-	_ = filepath.WalkDir(path, func(path string, file fs.DirEntry, err error) error {
+	_ = filepath.WalkDir(c.root, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		ext := filepath.Ext(file.Name())
 		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
+			lang := strings.ToLower(filepath.Base(filepath.Dir(path)))
+			if len(c.loadFiles[lang]) == 0 {
+				c.loadFiles[lang] = map[string]string{}
+			}
+			c.loadFiles[lang][file.Name()] = path
 			fileContent, err := util.ReadFileToSlice(path)
 			if err != nil {
 				return err
 			}
 			variables, err := translation.FromFileContents(fileContent)
 			if err == nil {
-				lang := strings.ToLower(filepath.Base(filepath.Dir(path)))
 				if len(rows[lang]) == 0 {
 					rows[lang] = map[string][]string{}
 				}
@@ -90,20 +105,18 @@ func genRows(path string) *[]table.Row {
 	})
 	largest := map[string][]string{}
 	for _, files := range rows {
-		for filename, vars := range files {
-			if len(largest[filename]) < len(vars) {
-				largest[filename] = vars
+		for filename, stringVariables := range files {
+			if len(largest[filename]) < len(stringVariables) {
+				largest[filename] = stringVariables
 			}
 		}
 	}
 	out := []table.Row{}
 	for lang, _ := range rows {
-		for filename, vars := range largest {
+		for filename, stringVariables := range largest {
 			size_for_lang := rows[lang][filename]
-			for _, diff := range *difference(&vars, &size_for_lang) {
-				out = append(out, table.Row{lang, filename, diff})
-			}
-
+			diff := strings.Join(*difference(&stringVariables, &size_for_lang), ",")
+			out = append(out, table.Row{lang, filename, diff})
 		}
 	}
 	return &out
@@ -114,8 +127,9 @@ func (c checkVariables) Init() tea.Cmd { return nil }
 func (c checkVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SelectedFilePath:
-		rows := genRows(string(msg))
-		c.table.SetRows(*rows)
+		c.loadFiles = map[string]map[string]string{}
+		c.root = string(msg)
+		c.table.SetRows(*c.genRows())
 		return c, nil
 	case tea.WindowSizeMsg:
 		h, w := docStyle.GetFrameSize()
@@ -140,8 +154,20 @@ func (c checkVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return state.PreviousCommand(), nil
 		case "ctrl+c", "ctrl+d":
 			return c, tea.Quit
-		case "enter":
-			// TODO: Render missing vars
+		case "f":
+			lang := c.table.SelectedRow()[0]
+			file_name := c.table.SelectedRow()[1]
+			strings := strings.Split(c.table.SelectedRow()[2], ",")
+			path := c.loadFiles[lang][file_name]
+			content := []string{"\n"}
+			for _, missing := range strings {
+				content = append(content, fmt.Sprintf("@%s = ~~\n", missing))
+			}
+			util.WriteToFile(path, &content)
+		case "e", "enter":
+			lang := c.table.SelectedRow()[0]
+			file_name := c.table.SelectedRow()[1]
+			return state.SetAndGetNextCommand(c), SendPathCmd(c.loadFiles[lang][file_name])
 		}
 	}
 	var cmd tea.Cmd
@@ -150,6 +176,6 @@ func (c checkVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (c checkVariables) View() string {
-	body := []string{c.table.View(), "\n\n", c.table.HelpView(), " enter"}
+	body := []string{c.table.View(), "\n\n", c.table.HelpView(), " e enter view, f fix"}
 	return baseStyle.Render(body...)
 }
