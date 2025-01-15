@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"cmp"
 	"fmt"
 	"io/fs"
 	"path/filepath"
-	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/table"
@@ -20,6 +17,7 @@ type checkVariables struct {
 	table     table.Model
 	loadFiles map[string]map[string]string
 	root      string
+	langDir   string
 }
 
 func NewCheck() checkVariables {
@@ -51,30 +49,17 @@ func NewCheck() checkVariables {
 	return checkVariables{table: t}
 }
 
-func difference(slice1 *[]string, slice2 *[]string) *[]string {
-	diff := []string{}
-	m := map[string]int{}
-
-	for _, s := range *slice1 {
-		m[s] = 1
+func (c *checkVariables) findPath() string {
+	lang := c.table.SelectedRow()[0]
+	file_name := c.table.SelectedRow()[1]
+	path := c.loadFiles[lang][file_name]
+	if len(path) == 0 {
+		path = filepath.Join(c.langDir, lang, file_name)
 	}
-	for _, s := range *slice2 {
-		m[s] += 1
-	}
-	for k, v := range m {
-		if v == 1 {
-			diff = append(diff, k)
-		}
-	}
-	slices.SortFunc(diff, func(a, b string) int {
-		v1, _ := strconv.Atoi(a)
-		v2, _ := strconv.Atoi(b)
-		return cmp.Compare(v1, v2)
-	})
-	return &diff
+	return path
 }
 
-func (c checkVariables) genRows() *[]table.Row {
+func (c *checkVariables) genRows() *[]table.Row {
 	rows := map[string]map[string][]string{}
 	_ = filepath.WalkDir(c.root, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
@@ -82,7 +67,10 @@ func (c checkVariables) genRows() *[]table.Row {
 		}
 		ext := filepath.Ext(file.Name())
 		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
-			lang := strings.ToLower(filepath.Base(filepath.Dir(path)))
+			if len(c.langDir) == 0 {
+				c.langDir = filepath.Dir(filepath.Dir(path))
+			}
+			lang := filepath.Base(filepath.Dir(path))
 			if len(c.loadFiles[lang]) == 0 {
 				c.loadFiles[lang] = map[string]string{}
 			}
@@ -115,8 +103,11 @@ func (c checkVariables) genRows() *[]table.Row {
 	for lang, _ := range rows {
 		for filename, stringVariables := range largest {
 			size_for_lang := rows[lang][filename]
-			diff := strings.Join(*difference(&stringVariables, &size_for_lang), ",")
-			out = append(out, table.Row{lang, filename, diff})
+			sliceDiff := util.SortedDifference(&stringVariables, &size_for_lang)
+			diff := strings.Join(*sliceDiff, ",")
+			if len(diff) > 0 {
+				out = append(out, table.Row{lang, filename, diff})
+			}
 		}
 	}
 	return &out
@@ -155,19 +146,25 @@ func (c checkVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "ctrl+d":
 			return c, tea.Quit
 		case "f":
-			lang := c.table.SelectedRow()[0]
-			file_name := c.table.SelectedRow()[1]
-			strings := strings.Split(c.table.SelectedRow()[2], ",")
-			path := c.loadFiles[lang][file_name]
-			content := []string{"\n"}
-			for _, missing := range strings {
-				content = append(content, fmt.Sprintf("@%s = ~~\n", missing))
+			if len(c.table.Rows()) > 0 {
+
+				strings := strings.Split(c.table.SelectedRow()[2], ",")
+				content := []string{"\n"}
+				for _, missing := range strings {
+					content = append(content, fmt.Sprintf("@%s = ~~\n", missing))
+				}
+				err := util.WriteToFile(c.findPath(), &content)
+				if err != nil {
+					panic(err)
+				}
+				c.table.SetRows(*c.genRows())
 			}
-			util.WriteToFile(path, &content)
 		case "e", "enter":
-			lang := c.table.SelectedRow()[0]
-			file_name := c.table.SelectedRow()[1]
-			return state.SetAndGetNextCommand(c), SendPathCmd(c.loadFiles[lang][file_name])
+			if len(c.table.Rows()) > 0 {
+				lang := c.table.SelectedRow()[0]
+				file_name := c.table.SelectedRow()[1]
+				return state.SetAndGetNextCommand(c), SendPathCmd(c.loadFiles[lang][file_name])
+			}
 		}
 	}
 	var cmd tea.Cmd
