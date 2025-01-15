@@ -39,7 +39,7 @@ func TestString(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		v, err := FromString(tc.testString, 0)
+		v, err := FromString(tc.testString)
 		if !errors.Is(err, tc.error) {
 			t.Fatalf("Unexpected Error:\n%+v\n%+v", err, tc.error)
 		}

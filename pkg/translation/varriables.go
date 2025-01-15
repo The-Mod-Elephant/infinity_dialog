@@ -3,6 +3,7 @@ package translation
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"unicode"
 
 	"golang.org/x/text/runes"
@@ -49,7 +50,8 @@ func ToAscii(str string) string {
 	return result
 }
 
-func FromString(s string, start int) (*Variable, error) {
+func FromString(s string) (*Variable, error) {
+	start := 0
 	v := &Variable{}
 	for i := start; i < len(s); i++ {
 		// 48->57 is 0-9 in ascii
@@ -88,23 +90,27 @@ func FromString(s string, start int) (*Variable, error) {
 	return v, nil
 }
 
-func FromFileContents(fileContents string) (*[]Variable, error) {
+func FromFileContents(fileContents *[]string) (*[]Variable, error) {
 	out := []Variable{}
-	for n := 0; n < len(fileContents); n++ {
+	multi := false
+	buffer := ""
+	for _, line := range *fileContents {
 		// Deal with single line comment
-		if n+1 < len(fileContents) && fileContents[n] == '/' && fileContents[n+1] == '/' {
-			n++
-			for n < len(fileContents) {
-				s := fileContents[n]
-				if s == '\n' {
-					break
+		if len(line) > 2 && line[0:1] != "//" {
+			if !multi && strings.Count(line, "~") != 2 {
+				multi = true
+				buffer += line
+			} else if strings.Count(line, "~") == 1 {
+				multi = false
+				buffer += line
+				if v, err := FromString(buffer); err == nil {
+					out = append(out, *v)
 				}
-				n++
+			} else {
+				if v, err := FromString(line); err == nil {
+					out = append(out, *v)
+				}
 			}
-		}
-		if v, err := FromString(fileContents, n); err == nil {
-			out = append(out, *v)
-			n = v.end()
 		}
 	}
 	return &out, nil
