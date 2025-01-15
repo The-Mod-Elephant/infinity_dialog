@@ -71,8 +71,8 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "Check":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
 				c := NewCheck()
-				// f := NewFileView()
-				state.SetNextCommand(d).SetNextCommand(c)
+				f := NewFileView()
+				state.SetNextCommand(d).SetNextCommand(c).SetNextCommand(f)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			case "Discover":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
