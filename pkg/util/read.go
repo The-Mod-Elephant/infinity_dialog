@@ -5,25 +5,27 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-func GetFiles(path string, ext string) []fs.FileInfo {
-	out := []fs.FileInfo{}
-	f, err := os.Open(path)
-	if err != nil {
-		return out
-	}
-	defer f.Close()
-	files, err := f.Readdir(0)
-	if err != nil {
-		return out
-	}
-	for _, f := range files {
-		if !f.IsDir() && filepath.Ext(f.Name()) == ext {
-			out = append(out, f)
+func ReadFiles(root string, ext string) (map[string]*[]string, error) {
+	files := map[string]*[]string{}
+	err := filepath.WalkDir(root, func(path string, file fs.DirEntry, err error) error {
+		if err != nil {
+			return err
 		}
-	}
-	return out
+		file_ext := strings.ToLower(filepath.Ext(file.Name()))
+		target_ext := "." + strings.ToLower(ext)
+		if !file.IsDir() && file_ext == target_ext {
+			fileContent, err := ReadFileToSlice(path)
+			if err != nil {
+				return err
+			}
+			files[file.Name()] = fileContent
+		}
+		return nil
+	})
+	return files, err
 }
 
 func ReadFile(path string) (*[]byte, error) {
@@ -34,12 +36,13 @@ func ReadFile(path string) (*[]byte, error) {
 	return &data, nil
 }
 
-func ReadFileToString(path string) (string, error) {
+func ReadFileToString(path string) (*string, error) {
 	data, err := ReadFile(path)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(*data), nil
+	out := string(*data)
+	return &out, nil
 }
 
 func ReadFileToSlice(path string) (*[]string, error) {

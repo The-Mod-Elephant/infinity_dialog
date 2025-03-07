@@ -34,6 +34,7 @@ func InitialModel() initial {
 		item{title: "Discover", desc: "Find all strings in a mod/directory"},
 		item{title: "Traverse", desc: "Show tree of locations through a mod"},
 		item{title: "View", desc: "View any Infinity Engine file or text file"},
+		item{title: "Dialogue Tree", desc: "View the Dialogue tree of a mod"},
 		// TODO: Implement these
 		// item{title: "Add", desc: "Add strings to tra"},
 		// item{title: "Range", desc: "What range of numbers are free"},
@@ -69,28 +70,33 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			switch i.list.SelectedItem().FilterValue() {
 			case "Check":
-				d := NewDirectoryPicker(true, "Select a Mod Directory")
+				d := NewDirectoryPicker(true, "Select a Mod Directory to start")
 				c := NewCheck()
 				f := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(c).SetNextCommand(f)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			case "Discover":
-				d := NewDirectoryPicker(true, "Select a Mod Directory")
+				d := NewDirectoryPicker(true, "Select a Mod Directory to start")
 				l := NewList()
 				f := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(l).SetNextCommand(f)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			case "Traverse":
-				d := NewDirectoryPicker(true, "Select a Mod Directory")
+				d := NewDirectoryPicker(true, "Select a Mod Directory to start")
 				f := NewDirectoryPicker(false, "Select an area to start")
 				t := NewTree()
 				v := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(f).SetNextCommand(t).SetNextCommand(v)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			case "View":
-				d := NewDirectoryPicker(false, "Select a file to start")
+				d := NewDirectoryPicker(false, "Select a Mod Directory to start")
 				v := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(v)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
+			case "Dialogue Tree":
+				d := NewDirectoryPicker(true, "Select a Mod Directory to start")
+				t := NewDialogueTree()
+				state.SetNextCommand(d).SetNextCommand(t)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
 			}
 		}

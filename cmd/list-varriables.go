@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/dark0dave/infinity_dialog/pkg/components"
 	"github.com/dark0dave/infinity_dialog/pkg/translation"
 	"github.com/dark0dave/infinity_dialog/pkg/util"
 )
@@ -97,19 +98,7 @@ func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		h1, w1 := baseStyle.GetFrameSize()
 		h += h1
 		w += w1
-		if msg.Height > h {
-			l.table.SetHeight(msg.Height - h)
-		}
-		if msg.Width > w {
-			ratio := float64(msg.Width - w)
-			l.table.SetColumns([]table.Column{
-				{Title: "FileName", Width: int(0.2 * ratio)},
-				{Title: "Lang", Width: int(0.1 * ratio)},
-				{Title: "Id", Width: int(0.05 * ratio)},
-				{Title: "Value", Width: int(0.55 * ratio)},
-			})
-			l.table.SetWidth(int(ratio))
-		}
+		components.DynamicalSetTableSize(&l.table, &msg, h, w)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "esc":

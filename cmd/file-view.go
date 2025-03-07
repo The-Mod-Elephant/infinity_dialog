@@ -44,12 +44,10 @@ func NewFileView() fileview {
 	return f
 }
 
-func GetFileContents(path string) (string, string) {
+func GetFileContents(path string) (*string, string) {
 	dir := filepath.Base(path)
 	content := ""
-	f, err := os.Open(path)
-	if err != nil {
-	}
+	f, _ := os.Open(path)
 	defer f.Close()
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".are":
@@ -120,12 +118,12 @@ func GetFileContents(path string) (string, string) {
 		}
 		content = buf.String()
 	default:
-		content, err = util.ReadFileToString(path)
+		content, err := util.ReadFileToString(path)
 		if err != nil {
 			return content, dir
 		}
 	}
-	return content, dir
+	return &content, dir
 }
 
 func (f fileview) Init() tea.Cmd {
@@ -143,13 +141,13 @@ func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return f, f.Init()
 	case SelectedFilePath:
 		content, title := GetFileContents(string(msg))
-		f.content = content
+		f.content = *content
 		f.viewport.SetContent(f.content)
 		f.title = title
 		return f, f.Init()
 	case PathMsg:
 		content, title := GetFileContents(string(msg))
-		f.content = content
+		f.content = *content
 		f.viewport.SetContent(f.content)
 		f.title = title
 		return f, f.Init()
