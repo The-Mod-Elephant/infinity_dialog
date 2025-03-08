@@ -175,13 +175,12 @@ func findChildren(path string, file_map *map[string]string, nodes *[]tree.Node, 
 		return nil
 	}
 	contents, err := util.ReadFileToString(path)
-	contents = strings.ToLower(contents)
 	if err != nil {
 		return err
 	}
 	filename := filepath.Base(path)
 	for k, v := range *file_map {
-		if k != filename && strings.Contains(contents, "\""+k[:len(k)-4]+"\")") {
+		if k != filename && strings.Contains(strings.ToLower(*contents), "\""+k[:len(k)-4]+"\")") {
 			child.Children = append(child.Children, tree.Node{
 				Value:    k,
 				Desc:     v,

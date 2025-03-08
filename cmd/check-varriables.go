@@ -100,7 +100,7 @@ func (c *checkVariables) genRows() *[]table.Row {
 		}
 	}
 	out := []table.Row{}
-	for lang, _ := range rows {
+	for lang := range rows {
 		for filename, stringVariables := range largest {
 			size_for_lang := rows[lang][filename]
 			sliceDiff := util.SortedDifference(&stringVariables, &size_for_lang)
