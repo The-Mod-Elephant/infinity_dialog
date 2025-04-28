@@ -32,6 +32,7 @@ jobs:
         set-safe-directory: true
     - name: Test
       run: |
+        go tool -modfile=tool.mod golangci-lint run
         go test ./...
   build:
     name: build

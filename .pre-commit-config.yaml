@@ -36,12 +36,13 @@ repos:
       - id: go-mod-tidy
         stages: [pre-commit]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         stages: [pre-commit]
+        exclude: ^.*[sum|mod]$
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.31.0
+    rev: v4.6.0
     hooks:
       - id: commitizen
         stages: [commit-msg]
