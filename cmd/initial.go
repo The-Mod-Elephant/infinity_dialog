@@ -3,10 +3,10 @@ package cmd
 import (
 	"os"
 
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/nav"
 	list "github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dark0dave/infinity_dialog/pkg/nav"
 )
 
 var (

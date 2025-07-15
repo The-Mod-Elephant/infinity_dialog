@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/The-Mod-Elephant/infinity_dialog/cmd"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/dark0dave/infinity_dialog/cmd"
 )
 
 func main() {

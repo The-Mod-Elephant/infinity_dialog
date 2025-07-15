@@ -1,7 +1,7 @@
 # git-cliff ~ default configuration file
 # https://git-cliff.org/docs/configuration
 [remote.github]
-owner = "dark0dave"
+owner = "The-Mod-Elephant"
 repo = "infinity_dialog"
 [changelog]
 # changelog header
