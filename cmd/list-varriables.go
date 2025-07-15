@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/translation"
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/util"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dark0dave/infinity_dialog/pkg/translation"
-	"github.com/dark0dave/infinity_dialog/pkg/util"
 )
 
 var baseStyle = lipgloss.NewStyle().

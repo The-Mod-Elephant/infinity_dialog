@@ -22,26 +22,41 @@ repos:
         exclude: (?x)^([fixtures|docs])
       - id: git-dirty
         stages: [pre-commit]
-  - repo: https://github.com/dnephin/pre-commit-golang
-    rev: v0.5.1
+  - repo: local
     hooks:
+      - id: go-test
+        stages: [pre-commit]
+        name: go test
+        description: Run the test suite
+        entry: go test -v ./...
+        language: system
+        types: [go]
+        pass_filenames: false
       - id: go-fmt
         stages: [pre-commit]
-      - id: go-vet
-        stages: [pre-commit]
-      - id: go-unit-tests
-        stages: [pre-commit]
-      - id: go-build
-        stages: [pre-commit]
+        name: go fmt
+        description: Format files with cargo fmt.
+        entry: go fmt ./...
+        language: system
+        types: [go]
+        pass_filenames: false
       - id: go-mod-tidy
         stages: [pre-commit]
+        name: go mod tidy
+        description: Tidy go mod
+        entry: go mod tidy
+        language: system
+        types: [go]
+        pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
+        entry: codespell
         stages: [pre-commit]
+        exclude: (?x)^([bg|fixtures])
   - repo: https://github.com/commitizen-tools/commitizen
-    rev: v3.31.0
+    rev: v4.8.3
     hooks:
       - id: commitizen
         stages: [commit-msg]

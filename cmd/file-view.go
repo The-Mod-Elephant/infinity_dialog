@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/util"
+	"github.com/The-Mod-Elephant/infinity_file_formats/bg"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dark0dave/infinity_dialog/pkg/util"
-	"github.com/dark0dave/infinity_file_formats/bg"
 )
 
 var (
@@ -107,6 +107,15 @@ func GetFileContents(path string) (string, string) {
 		}
 		buf := new(bytes.Buffer)
 		err = item.WriteJson(buf)
+		if err != nil {
+		}
+		content = buf.String()
+	case ".sto":
+		dlg, err := bg.OpenSTO(f)
+		if err != nil {
+		}
+		buf := new(bytes.Buffer)
+		err = dlg.WriteJson(buf)
 		if err != nil {
 		}
 		content = buf.String()

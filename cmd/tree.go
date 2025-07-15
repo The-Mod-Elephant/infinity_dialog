@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/util"
+	"github.com/The-Mod-Elephant/infinity_file_formats/bg"
 	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/dark0dave/infinity_dialog/pkg/util"
-	"github.com/dark0dave/infinity_file_formats/bg"
 	tree "github.com/savannahostrowski/tree-bubble"
 )
 

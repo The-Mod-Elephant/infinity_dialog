@@ -1,12 +1,12 @@
-module github.com/dark0dave/infinity_dialog
+module github.com/The-Mod-Elephant/infinity_dialog
 
-go 1.23
+go 1.24
 
 require (
+	github.com/The-Mod-Elephant/infinity_file_formats v0.6.1
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
-	github.com/dark0dave/infinity_file_formats v0.0.0-20241205000111-f0cefbb38b7d
 	github.com/savannahostrowski/tree-bubble v0.0.0-20230724043728-d7bb06a8a67e
 	golang.org/x/text v0.21.0
 )
