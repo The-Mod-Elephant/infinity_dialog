@@ -1,0 +1,64 @@
+name: tag
+on:
+  push:
+    tags:
+    - "*"
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+          set-safe-directory: true
+      - name: Get the tag
+        id: get_tag
+        run: echo ::set-output name=git_tag::${GITHUB_REF/refs\/tags\//}
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          generateReleaseNotes: true
+  release-artifacts:
+    name: Release Artifacts
+    needs:
+      [create-release]
+    runs-on: ubuntu-latest
+    container: golang:1.24.5-alpine3.22
+    strategy:
+      matrix:
+        include:
+          - os: darwin
+            arch: arm64
+            suffix: ''
+          - os: linux
+            arch: amd64
+            suffix: ''
+          - os: windows
+            arch: amd64
+            suffix: .exe
+    steps:
+      - name: Install git
+        run: apk add --update --no-cache git
+      - name: Checkout
+        uses: actions/checkout@v3.0.2
+        with:
+          fetch-depth: 0
+          set-safe-directory: true
+      - name: Build
+        run: |
+          GOFLAGS=-buildvcs=false GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} go build -o . ./...
+        shell: sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Release Asset - ${{ matrix.os }}-${{ matrix.arch }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./infinity_dialog${{ matrix.suffix }}
+          asset_name: infinity-dialog-${{ matrix.os }}${{ matrix.suffix }}
+          asset_content_type: application/octet-stream

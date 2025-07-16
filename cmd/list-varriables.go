@@ -73,7 +73,7 @@ func (l listVariables) readPath(path string) *[]table.Row {
 			return err
 		}
 		ext := filepath.Ext(file.Name())
-		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
+		if !file.IsDir() && strings.EqualFold(ext, ".tra") {
 			info, _ := file.Info()
 			file_rows := *generateRows(path, info)
 			rows = append(rows, file_rows...)

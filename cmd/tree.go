@@ -83,8 +83,7 @@ func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				n.paginator.NextPage()
 			}
 		case "e", "enter":
-			nodes := n.tree.Nodes()
-			node, _ := getSelected(&n, &nodes, 0)
+			node := n.getSelected()
 			return state.SetAndGetNextCommand(n), SendPathCmd(node.Desc)
 		case "q", "esc":
 			return state.SetAndGetPreviousCommand(n), nil
@@ -115,21 +114,27 @@ func (n nested) View() string {
 	return n.tree.Styles.Shapes.Render(b.String())
 }
 
-func getSelected(n *nested, nodes *[]tree.Node, counter int) (*tree.Node, int) {
-	for _, node := range *nodes {
-		counter += 1
-		if counter-1 == n.tree.Cursor() {
-			return &node, counter
-		}
-		if len(node.Children) > 0 {
-			if child, cnt := getSelected(n, &node.Children, counter); child != nil {
-				return child, cnt
-			} else {
-				counter = cnt
+func (n *nested) getSelected() *tree.Node {
+	count := 0
+
+	var findNodes func(*[]tree.Node) *tree.Node
+	findNodes = func(nodes *[]tree.Node) *tree.Node {
+		for _, node := range *nodes {
+			if count == n.tree.Cursor() {
+				return &node
+			}
+			count++
+			if node.Children == nil {
+				continue
+			}
+			if child := findNodes(&node.Children); child != nil {
+				return child
 			}
 		}
+		return nil
 	}
-	return nil, counter
+	nodes := n.tree.Nodes()
+	return findNodes(&nodes)
 }
 
 func parseArea(nodes *[]tree.Node, areapath string, file_map *map[string]string) {

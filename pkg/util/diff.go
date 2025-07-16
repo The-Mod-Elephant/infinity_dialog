@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func SortedDifference(slice1 *[]string, slice2 *[]string) *[]string {
+func SortedDifference(slice1, slice2 *[]string) *[]string {
 	diff := []string{}
 	m := map[string]int{}
 

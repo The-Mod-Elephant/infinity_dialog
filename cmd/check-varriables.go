@@ -53,7 +53,7 @@ func (c *checkVariables) findPath() string {
 	lang := c.table.SelectedRow()[0]
 	file_name := c.table.SelectedRow()[1]
 	path := c.loadFiles[lang][file_name]
-	if len(path) == 0 {
+	if path == "" {
 		path = filepath.Join(c.langDir, lang, file_name)
 	}
 	return path
@@ -66,8 +66,8 @@ func (c *checkVariables) genRows() *[]table.Row {
 			return err
 		}
 		ext := filepath.Ext(file.Name())
-		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
-			if len(c.langDir) == 0 {
+		if !file.IsDir() && strings.EqualFold(ext, ".tra") {
+			if c.langDir == "" {
 				c.langDir = filepath.Dir(filepath.Dir(path))
 			}
 			lang := filepath.Base(filepath.Dir(path))
@@ -100,12 +100,11 @@ func (c *checkVariables) genRows() *[]table.Row {
 		}
 	}
 	out := []table.Row{}
-	for lang, _ := range rows {
+	for lang := range rows {
 		for filename, stringVariables := range largest {
 			size_for_lang := rows[lang][filename]
 			sliceDiff := util.SortedDifference(&stringVariables, &size_for_lang)
-			diff := strings.Join(*sliceDiff, ",")
-			if len(diff) > 0 {
+			if diff := strings.Join(*sliceDiff, ","); diff != "" {
 				out = append(out, table.Row{lang, filename, diff})
 			}
 		}
@@ -148,9 +147,9 @@ func (c checkVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "f":
 			if len(c.table.Rows()) > 0 {
 
-				strings := strings.Split(c.table.SelectedRow()[2], ",")
+				csv := strings.Split(c.table.SelectedRow()[2], ",")
 				content := []string{"\n"}
-				for _, missing := range strings {
+				for _, missing := range csv {
 					content = append(content, fmt.Sprintf("@%s = ~~\n", missing))
 				}
 				err := util.WriteToFile(c.findPath(), &content)

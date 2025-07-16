@@ -48,6 +48,14 @@ repos:
         language: system
         types: [go]
         pass_filenames: false
+      - id: go-critic
+        stages: [pre-commit]
+        name: go critic
+        description: Go Critic
+        entry: gocritic check -enableAll ./...
+        language: system
+        types: [go]
+        pass_filenames: false
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:

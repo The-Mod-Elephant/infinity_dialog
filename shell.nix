@@ -1,8 +1,12 @@
-{ pkgs ? import <nixpkgs> {} }:
-pkgs.mkShell {
-  buildInputs = with pkgs; [
+with import <nixpkgs> {};
+stdenv.mkDerivation {
+  name = "go-env";
+  buildInputs = [
+    delve
     git
-    go
+    gnupg
     pre-commit
+    go
+    go-critic
   ];
 }

@@ -44,53 +44,65 @@ func NewFileView() fileview {
 	return f
 }
 
-func GetFileContents(path string) (string, string) {
-	dir := filepath.Base(path)
-	content := ""
+func GetFileContents(path string) (*string, error) {
 	f, err := os.Open(path)
 	if err != nil {
+		return nil, err
 	}
 	defer f.Close()
 	switch strings.ToLower(filepath.Ext(path)) {
 	case ".are":
 		area, err := bg.OpenArea(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = area.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".bam":
 		bam, err := bg.OpenBAM(f, nil)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = bam.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".cre":
 		cre, err := bg.OpenCre(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = cre.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".dlg":
 		dlg, err := bg.OpenDlg(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = dlg.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".eff":
 		effv1, effv2, err := bg.OpenEff(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		if effv1 != nil {
@@ -99,42 +111,53 @@ func GetFileContents(path string) (string, string) {
 			err = effv2.WriteJson(buf)
 		}
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".itm":
 		item, err := bg.OpenITM(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = item.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".sto":
 		dlg, err := bg.OpenSTO(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = dlg.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	case ".spl":
 		dlg, err := bg.OpenSPL(f)
 		if err != nil {
+			return nil, err
 		}
 		buf := new(bytes.Buffer)
 		err = dlg.WriteJson(buf)
 		if err != nil {
+			return nil, err
 		}
-		content = buf.String()
+		json := buf.String()
+		return &json, nil
 	default:
-		content, err = util.ReadFileToString(path)
+		content, err := util.ReadFileToString(path)
 		if err != nil {
-			return content, dir
+			return nil, err
 		}
+		return &content, nil
 	}
-	return content, dir
 }
 
 func (f fileview) Init() tea.Cmd {
@@ -151,16 +174,22 @@ func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		f.viewport.SetContent(f.content)
 		return f, f.Init()
 	case SelectedFilePath:
-		content, title := GetFileContents(string(msg))
-		f.content = content
+		content, err := GetFileContents(string(msg))
+		if err != nil {
+			return nil, tea.Quit
+		}
+		f.content = *content
 		f.viewport.SetContent(f.content)
-		f.title = title
+		f.title = filepath.Base(string(msg))
 		return f, f.Init()
 	case PathMsg:
-		content, title := GetFileContents(string(msg))
-		f.content = content
+		content, err := GetFileContents(string(msg))
+		if err != nil {
+			return nil, tea.Quit
+		}
+		f.content = *content
 		f.viewport.SetContent(f.content)
-		f.title = title
+		f.title = filepath.Base(string(msg))
 		return f, f.Init()
 	case tea.KeyMsg:
 		switch msg.String() {

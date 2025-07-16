@@ -97,16 +97,17 @@ func FromFileContents(fileContents *[]string) (*[]Variable, error) {
 	for _, line := range *fileContents {
 		// Deal with single line comment
 		if len(line) > 2 && line[0:1] != "//" {
-			if !multi && strings.Count(line, "~") != 2 {
+			switch {
+			case !multi && strings.Count(line, "~") != 2:
 				multi = true
 				buffer += line
-			} else if strings.Count(line, "~") == 1 {
+			case strings.Count(line, "~") == 1:
 				multi = false
 				buffer += line
 				if v, err := FromString(buffer); err == nil {
 					out = append(out, *v)
 				}
-			} else {
+			default:
 				if v, err := FromString(line); err == nil {
 					out = append(out, *v)
 				}

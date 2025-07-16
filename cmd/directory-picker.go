@@ -59,7 +59,7 @@ func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return d, d.Init()
 	case tea.WindowSizeMsg:
 		h, _ := docStyle.GetFrameSize()
-		d.filepicker.Height = d.filepicker.Height - h
+		d.filepicker.Height -= h
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "e":

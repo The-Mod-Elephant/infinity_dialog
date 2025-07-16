@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-func GetFiles(path string, ext string) []fs.FileInfo {
+func GetFiles(path, ext string) []fs.FileInfo {
 	out := []fs.FileInfo{}
 	f, err := os.Open(path)
 	if err != nil {
