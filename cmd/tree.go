@@ -146,7 +146,7 @@ func parseArea(nodes *[]tree.Node, path string, fileMap map[string]string) {
 		return
 	}
 
-	childName := fmt.Sprintf("%s.%s", strings.Split(strings.ToLower(string(area.Offsets.Script.Name[:])), "\x00")[0], "baf")
+	childName := fmt.Sprintf("%s.%s", strings.Split(strings.ToLower(string(area.Script[:])), "\x00")[0], "baf")
 	filePath := fileMap[childName]
 
 	parent := tree.Node{
@@ -165,7 +165,7 @@ func parseArea(nodes *[]tree.Node, path string, fileMap map[string]string) {
 	}
 
 	for _, entrance := range area.Entrances {
-		areaName := fmt.Sprintf("%s.%s", strings.ToLower(string(entrance.Name.Value[:])), "are")
+		areaName := fmt.Sprintf("%s.%s", strings.ToLower(string(entrance.Name[:])), "are")
 		areaPath := fileMap[childName]
 		if !presentInTopOfTree(*nodes, areaName) {
 			parseArea(nodes, areaPath, fileMap)

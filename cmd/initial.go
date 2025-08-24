@@ -38,6 +38,7 @@ func InitialModel() Initial {
 		Item{title: "Discover", desc: "Find all strings in a mod/directory"},
 		Item{title: "Traverse", desc: "Show tree of locations through a mod"},
 		Item{title: "View", desc: "View any Infinity Engine file or text file"},
+		Item{title: "Mods", desc: "View what mods are installed, in a game directory"},
 		// TODO: Implement these
 		// item{title: "Add", desc: "Add strings to tra"},
 		// item{title: "Range", desc: "What range of numbers are free"},
@@ -95,6 +96,11 @@ func (i Initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				d := NewDirectoryPicker(false, "Select a file to start")
 				v := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(v)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(currentPath)
+			case "Mods":
+				d := NewDirectoryPicker(true, "Select a game directory folder (BGEE, BG2EE, or EET)")
+				m := NewModList()
+				state.SetNextCommand(d).SetNextCommand(m)
 				return state.SetAndGetNextCommand(i), SendSelectedFile(currentPath)
 			}
 		}
