@@ -11,11 +11,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	helpStyle = lipgloss.NewStyle().Padding(1, 0, 0, 2).Foreground(lipgloss.Color("241"))
-)
+var helpStyle = lipgloss.NewStyle().Padding(1, 0, 0, 2).Foreground(lipgloss.Color("241"))
 
-type directoryPicker struct {
+type DirectoryPicker struct {
 	filepicker   filepicker.Model
 	message      string
 	selectedFile string
@@ -24,8 +22,7 @@ type directoryPicker struct {
 	err          error
 }
 
-// TODO: Hide unselectable
-func NewDirectoryPicker(dir bool, message string) directoryPicker {
+func NewDirectoryPicker(dir bool, message string) DirectoryPicker {
 	fp := filepicker.New()
 	fp.DirAllowed = dir
 	fp.FileAllowed = !dir
@@ -33,7 +30,7 @@ func NewDirectoryPicker(dir bool, message string) directoryPicker {
 	fp.Height = height - h - 5
 	fp.AutoHeight = true
 	fp.ShowHidden = false
-	return directoryPicker{
+	return DirectoryPicker{
 		filepicker: fp,
 		message:    message,
 	}
@@ -47,11 +44,11 @@ func clearErrorAfter(t time.Duration) tea.Cmd {
 	})
 }
 
-func (d directoryPicker) Init() tea.Cmd {
+func (d DirectoryPicker) Init() tea.Cmd {
 	return d.filepicker.Init()
 }
 
-func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (d DirectoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SelectedFilePath:
 		d.filepicker.CurrentDirectory = string(msg)
@@ -59,7 +56,7 @@ func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return d, d.Init()
 	case tea.WindowSizeMsg:
 		h, _ := docStyle.GetFrameSize()
-		d.filepicker.Height = d.filepicker.Height - h
+		d.filepicker.Height -= h
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "e":
@@ -98,7 +95,7 @@ func (d directoryPicker) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return d, cmd
 }
 
-func (d directoryPicker) View() string {
+func (d DirectoryPicker) View() string {
 	var s strings.Builder
 	s.WriteString("\n  ")
 

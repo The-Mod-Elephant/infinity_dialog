@@ -34,15 +34,7 @@ func (v *Variable) isRecording() bool {
 	return v.recording
 }
 
-func (v *Variable) start() int {
-	return v.identifierStart
-}
-
-func (v *Variable) end() int {
-	return v.valueEnd
-}
-
-func ToAscii(str string) string {
+func ToASCII(str string) string {
 	result, _, err := transform.String(transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn))), str)
 	if err != nil {
 		return ""
@@ -74,7 +66,7 @@ func FromString(s string) (*Variable, error) {
 		// "~" is 126
 		if v.isRecording() && s[i] == 126 {
 			v.valueEnd = i
-			v.Value = ToAscii(s[v.valueStart:v.valueEnd])
+			v.Value = ToASCII(s[v.valueStart:v.valueEnd])
 			v.toggleRecording()
 			break
 		}
@@ -96,20 +88,22 @@ func FromFileContents(fileContents *[]string) (*[]Variable, error) {
 	buffer := ""
 	for _, line := range *fileContents {
 		// Deal with single line comment
-		if len(line) > 2 && line[0:1] != "//" {
-			if !multi && strings.Count(line, "~") != 2 {
-				multi = true
-				buffer += line
-			} else if strings.Count(line, "~") == 1 {
-				multi = false
-				buffer += line
-				if v, err := FromString(buffer); err == nil {
-					out = append(out, *v)
-				}
-			} else {
-				if v, err := FromString(line); err == nil {
-					out = append(out, *v)
-				}
+		if len(line) < 2 && line[0:1] == "//" {
+			continue
+		}
+		switch {
+		case !multi && strings.Count(line, "~") != 2:
+			multi = true
+			buffer += line
+		case strings.Count(line, "~") == 1:
+			multi = false
+			buffer += line
+			if v, err := FromString(buffer); err == nil {
+				out = append(out, *v)
+			}
+		default:
+			if v, err := FromString(line); err == nil {
+				out = append(out, *v)
 			}
 		}
 	}

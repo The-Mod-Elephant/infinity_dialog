@@ -4,19 +4,19 @@ import tea "github.com/charmbracelet/bubbletea"
 
 var position = 0
 
-type state struct {
+type State struct {
 	model    tea.Model
-	next     *state
-	previous *state
+	next     *State
+	previous *State
 }
 
-func NewState() *state {
-	return &state{}
+func NewState() *State {
+	return &State{}
 }
 
-func (s *state) setCurrentCommand(m tea.Model) {
+func (s *State) setCurrentCommand(m tea.Model) {
 	if s.model == nil {
-		*s = state{
+		*s = State{
 			model:    m,
 			next:     s.next,
 			previous: s.previous,
@@ -30,8 +30,8 @@ func (s *state) setCurrentCommand(m tea.Model) {
 	s.model = m
 }
 
-func (s *state) NextCommand() tea.Model {
-	position += 1
+func (s *State) NextCommand() tea.Model {
+	position++
 	for range position {
 		if s.next != nil {
 			s = s.next
@@ -41,26 +41,25 @@ func (s *state) NextCommand() tea.Model {
 	return m
 }
 
-func (s *state) SetNextCommand(m tea.Model) *state {
+func (s *State) SetNextCommand(m tea.Model) *State {
 	if s.next == nil {
-		s.next = &state{
+		s.next = &State{
 			model:    m,
 			next:     nil,
 			previous: s,
 		}
 		return s.next
-	} else {
-		return s.next.SetNextCommand(m)
 	}
+	return s.next.SetNextCommand(m)
 }
 
-func (s *state) SetAndGetNextCommand(m tea.Model) tea.Model {
+func (s *State) SetAndGetNextCommand(m tea.Model) tea.Model {
 	s.setCurrentCommand(m)
 	return s.NextCommand()
 }
 
-func (s *state) PreviousCommand() tea.Model {
-	position -= 1
+func (s *State) PreviousCommand() tea.Model {
+	position--
 	for range position {
 		if s.next != nil {
 			s = s.next
@@ -70,20 +69,19 @@ func (s *state) PreviousCommand() tea.Model {
 	return m
 }
 
-func (s *state) SetPreviousCommand(m tea.Model) *state {
+func (s *State) SetPreviousCommand(m tea.Model) *State {
 	if s.previous == nil {
-		s.previous = &state{
+		s.previous = &State{
 			model:    m,
 			next:     s,
 			previous: nil,
 		}
 		return s.previous
-	} else {
-		return s.previous.SetPreviousCommand(m)
 	}
+	return s.previous.SetPreviousCommand(m)
 }
 
-func (s *state) SetAndGetPreviousCommand(m tea.Model) tea.Model {
+func (s *State) SetAndGetPreviousCommand(m tea.Model) tea.Model {
 	s.setCurrentCommand(m)
 	return s.PreviousCommand()
 }

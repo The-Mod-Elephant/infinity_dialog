@@ -32,9 +32,9 @@ func TestString(t *testing.T) {
 		{
 			expected: &Variable{
 				Identifier: "0",
-				Value:      "Aboleth le�� ve sv� n�dr�i, mimo dosah tv�ch zbran�. Mus� naj�t jin� zp�sob, jak zni�it mechanismus, kter� ho dr�� na�ivu.",
+				Value:      "Aboleth le�� ve sv� n�dr�i, mimo dosah tv�ch zbran�. Mus� naj�t jin� zp�sob, jak zni�it mechanisms, kter� ho dr�� na�ivu.",
 			},
-			testString: "@0    = ~Aboleth le�� ve sv� n�dr�i, mimo dosah tv�ch zbran�. Mus� naj�t jin� zp�sob, jak zni�it mechanismus, kter� ho dr�� na�ivu.~",
+			testString: "@0    = ~Aboleth le�� ve sv� n�dr�i, mimo dosah tv�ch zbran�. Mus� naj�t jin� zp�sob, jak zni�it mechanisms, kter� ho dr�� na�ivu.~",
 			error:      nil,
 		},
 	}

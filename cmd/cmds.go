@@ -2,10 +2,12 @@ package cmd
 
 import tea "github.com/charmbracelet/bubbletea"
 
-type SelectedFilePath string
-type ContentMsg string
-type PathMsg string
-type TitleMsg string
+type (
+	SelectedFilePath string
+	ContentMsg       string
+	PathMsg          string
+	TitleMsg         string
+)
 
 func SendSelectedFile(areapath string) tea.Cmd {
 	return func() tea.Msg {
