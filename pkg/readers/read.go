@@ -1,4 +1,4 @@
-package util
+package readers
 
 import (
 	"bufio"
@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 )
 
-func GetFiles(path string, ext string) []fs.FileInfo {
+func GetFiles(path, ext string) []fs.FileInfo {
 	out := []fs.FileInfo{}
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return out
 	}
@@ -27,7 +27,7 @@ func GetFiles(path string, ext string) []fs.FileInfo {
 }
 
 func ReadFile(path string) (*[]byte, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func ReadFileToString(path string) (string, error) {
 }
 
 func ReadFileToSlice(path string) (*[]string, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}

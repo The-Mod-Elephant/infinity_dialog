@@ -9,6 +9,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	Title = "Infinity Dialog"
+)
+
 var (
 	state    = nav.NewState()
 	docStyle = lipgloss.NewStyle().Margin(1, 2)
@@ -16,42 +20,42 @@ var (
 	height   = 0
 )
 
-type item struct {
+type Item struct {
 	title, desc string
 }
 
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
+func (i Item) Title() string       { return i.title }
+func (i Item) Description() string { return i.desc }
+func (i Item) FilterValue() string { return i.title }
 
-type initial struct {
+type Initial struct {
 	list list.Model
 }
 
-func InitialModel() initial {
+func InitialModel() Initial {
 	items := []list.Item{
-		item{title: "Check", desc: "Check all strings in a mod/directory"},
-		item{title: "Discover", desc: "Find all strings in a mod/directory"},
-		item{title: "Traverse", desc: "Show tree of locations through a mod"},
-		item{title: "View", desc: "View any Infinity Engine file or text file"},
+		Item{title: "Missing", desc: "Find missing strings for langs in a mod/directory"},
+		Item{title: "Discover", desc: "Find all strings in a mod/directory"},
+		Item{title: "Traverse", desc: "Show tree of locations through a mod"},
+		Item{title: "View", desc: "View any Infinity Engine file or text file"},
 		// TODO: Implement these
 		// item{title: "Add", desc: "Add strings to tra"},
 		// item{title: "Range", desc: "What range of numbers are free"},
 		// item{title: "Convert", desc: "Convert files to be traified"},
-		// item{title: "Decompiler", desc: "Dialogue decompiler"},
+		// item{title: "Decompiler", desc: "Dialog decompiler"},
 	}
-	i := initial{
+	i := Initial{
 		list: list.New(items, list.NewDefaultDelegate(), 0, 0),
 	}
-	i.list.Title = "Infinity Dialogue"
+	i.list.Title = Title
 	return i
 }
 
-func (i initial) Init() tea.Cmd {
+func (i Initial) Init() tea.Cmd {
 	return nil
 }
 
-func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (i Initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		h, v := docStyle.GetFrameSize()
@@ -63,35 +67,35 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return i, tea.Quit
 		case "enter", " ":
 			state = nav.NewState()
-			current_path, err := os.Getwd()
+			currentPath, err := os.Getwd()
 			if err != nil {
 				return i, tea.Quit
 			}
 			switch i.list.SelectedItem().FilterValue() {
-			case "Check":
+			case "Missing":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
 				c := NewCheck()
 				f := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(c).SetNextCommand(f)
-				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(currentPath)
 			case "Discover":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
 				l := NewList()
 				f := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(l).SetNextCommand(f)
-				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(currentPath)
 			case "Traverse":
 				d := NewDirectoryPicker(true, "Select a Mod Directory")
 				f := NewDirectoryPicker(false, "Select an area to start")
 				t := NewTree()
 				v := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(f).SetNextCommand(t).SetNextCommand(v)
-				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(currentPath)
 			case "View":
 				d := NewDirectoryPicker(false, "Select a file to start")
 				v := NewFileView()
 				state.SetNextCommand(d).SetNextCommand(v)
-				return state.SetAndGetNextCommand(i), SendSelectedFile(current_path)
+				return state.SetAndGetNextCommand(i), SendSelectedFile(currentPath)
 			}
 		}
 	}
@@ -100,6 +104,6 @@ func (i initial) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return i, cmd
 }
 
-func (i initial) View() string {
+func (i Initial) View() string {
 	return docStyle.Render(i.list.View())
 }

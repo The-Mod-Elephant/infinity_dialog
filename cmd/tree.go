@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/The-Mod-Elephant/infinity_dialog/pkg/util"
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/readers"
 	"github.com/The-Mod-Elephant/infinity_file_formats/bg"
 	"github.com/charmbracelet/bubbles/paginator"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,17 +14,17 @@ import (
 	tree "github.com/savannahostrowski/tree-bubble"
 )
 
-type nested struct {
+type Nested struct {
 	tree      tree.Model
-	file_map  *map[string]string
+	fileMap   map[string]string
 	paginator paginator.Model
 }
 
-func (m nested) Init() tea.Cmd {
+func (n Nested) Init() tea.Cmd {
 	return nil
 }
 
-func NewTree() nested {
+func NewTree() Nested {
 	h, w := docStyle.GetFrameSize()
 	_, right, _, left := docStyle.GetPadding()
 	w = w - left - right
@@ -37,27 +37,30 @@ func NewTree() nested {
 	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
 	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
 
-	return nested{tree: tree.New([]tree.Node{}, w, h), paginator: p}
+	return Nested{tree: tree.New([]tree.Node{}, w, h), paginator: p}
 }
 
-func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (n Nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case PathMsg:
-		file_map := map[string]string{}
-		filepath.Walk(string(msg), func(path string, info os.FileInfo, err error) error {
+		fileMap := map[string]string{}
+		err := filepath.Walk(string(msg), func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
 			// Only search baf + are files
 			if !info.IsDir() && (filepath.Ext(info.Name()) == ".are" || filepath.Ext(info.Name()) == ".baf") {
-				file_map[strings.ToLower(info.Name())] = path
+				fileMap[strings.ToLower(info.Name())] = path
 			}
 			return nil
 		})
-		n.file_map = &file_map
+		if err != nil {
+			return n, tea.Quit
+		}
+		n.fileMap = fileMap
 	case SelectedFilePath:
 		nodes := []tree.Node{}
-		parseArea(&nodes, string(msg), n.file_map)
+		parseArea(&nodes, string(msg), n.fileMap)
 		n.paginator.SetTotalPages(size(&nodes))
 		n.tree.SetNodes(nodes)
 		return n, n.Init()
@@ -93,19 +96,19 @@ func (n nested) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	var (
-		pag_cmd  tea.Cmd
-		tree_cmd tea.Cmd
+		pagCmd  tea.Cmd
+		treeCmd tea.Cmd
 	)
-	n.tree, tree_cmd = n.tree.Update(msg)
-	n.paginator, pag_cmd = n.paginator.Update(msg)
-	return n, tea.Batch(pag_cmd, tree_cmd)
+	n.tree, treeCmd = n.tree.Update(msg)
+	n.paginator, pagCmd = n.paginator.Update(msg)
+	return n, tea.Batch(pagCmd, treeCmd)
 }
 
-func (n nested) View() string {
+func (n Nested) View() string {
 	// TODO: Collapse and expand tree
 	items := strings.Split(n.tree.View(), "\n")
 	var b strings.Builder
-	b.WriteString("\n  Dialogue Tree\n\n")
+	b.WriteString("\n  Dialog Tree\n\n")
 	start, end := n.paginator.GetSliceBounds(len(items))
 	for _, item := range items[start:end] {
 		b.WriteString(item + "\n")
@@ -115,25 +118,25 @@ func (n nested) View() string {
 	return n.tree.Styles.Shapes.Render(b.String())
 }
 
-func getSelected(n *nested, nodes *[]tree.Node, counter int) (*tree.Node, int) {
+func getSelected(n *Nested, nodes *[]tree.Node, counter int) (*tree.Node, int) {
 	for _, node := range *nodes {
-		counter += 1
+		counter++
 		if counter-1 == n.tree.Cursor() {
 			return &node, counter
 		}
 		if len(node.Children) > 0 {
-			if child, cnt := getSelected(n, &node.Children, counter); child != nil {
+			child, cnt := getSelected(n, &node.Children, counter)
+			if child != nil {
 				return child, cnt
-			} else {
-				counter = cnt
 			}
+			counter = cnt
 		}
 	}
 	return nil, counter
 }
 
-func parseArea(nodes *[]tree.Node, areapath string, file_map *map[string]string) {
-	f, err := os.Open(areapath)
+func parseArea(nodes *[]tree.Node, path string, fileMap map[string]string) {
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return
 	}
@@ -143,44 +146,44 @@ func parseArea(nodes *[]tree.Node, areapath string, file_map *map[string]string)
 		return
 	}
 
-	child_name := fmt.Sprintf("%s.%s", strings.Split(strings.ToLower(string(area.Offsets.Script.Name[:])), "\x00")[0], "baf")
-	file_path := (*file_map)[child_name]
+	childName := fmt.Sprintf("%s.%s", strings.Split(strings.ToLower(string(area.Offsets.Script.Name[:])), "\x00")[0], "baf")
+	filePath := fileMap[childName]
 
 	parent := tree.Node{
-		Value: filepath.Base(areapath),
-		Desc:  areapath,
+		Value: filepath.Base(path),
+		Desc:  path,
 		Children: []tree.Node{{
-			Value:    child_name,
-			Desc:     file_path,
+			Value:    childName,
+			Desc:     filePath,
 			Children: []tree.Node{},
 		}},
 	}
 
 	*nodes = append((*nodes), parent)
-	if err := findChildren(file_path, file_map, nodes, &parent.Children[len(parent.Children)-1], 0); err != nil {
+	if err := findChildren(filePath, fileMap, nodes, &parent.Children[len(parent.Children)-1], 0); err != nil {
 		return
 	}
 
 	for _, entrance := range area.Entrances {
-		area_name := fmt.Sprintf("%s.%s", strings.ToLower(string(entrance.Name.Value[:])), "are")
-		area_path := (*file_map)[child_name]
-		if !presentInTopOfTree(*nodes, area_name) {
-			parseArea(nodes, area_path, file_map)
+		areaName := fmt.Sprintf("%s.%s", strings.ToLower(string(entrance.Name.Value[:])), "are")
+		areaPath := fileMap[childName]
+		if !presentInTopOfTree(*nodes, areaName) {
+			parseArea(nodes, areaPath, fileMap)
 		}
 	}
 }
 
-func findChildren(path string, file_map *map[string]string, nodes *[]tree.Node, child *tree.Node, depth int) error {
+func findChildren(path string, fileMap map[string]string, nodes *[]tree.Node, child *tree.Node, depth int) error {
 	if depth > 3 {
 		return nil
 	}
-	contents, err := util.ReadFileToString(path)
+	contents, err := readers.ReadFileToString(path)
 	contents = strings.ToLower(contents)
 	if err != nil {
 		return err
 	}
 	filename := filepath.Base(path)
-	for k, v := range *file_map {
+	for k, v := range fileMap {
 		if k != filename && strings.Contains(contents, "\""+k[:len(k)-4]+"\")") {
 			child.Children = append(child.Children, tree.Node{
 				Value:    k,
@@ -189,11 +192,11 @@ func findChildren(path string, file_map *map[string]string, nodes *[]tree.Node, 
 			})
 			if k[len(k)-3:] == "are" {
 				if !presentInTopOfTree(*nodes, k) {
-					parseArea(nodes, v, file_map)
+					parseArea(nodes, v, fileMap)
 				}
 			} else {
 				if !presentInTreeExcludingTop(nodes, k) {
-					err := findChildren(v, file_map, nodes, &child.Children[len(child.Children)-1], depth+1)
+					err := findChildren(v, fileMap, nodes, &child.Children[len(child.Children)-1], depth+1)
 					if err != nil {
 						return err
 					}
@@ -241,7 +244,7 @@ func presentInTree(nodes *[]tree.Node, name string) bool {
 func size(nodes *[]tree.Node) int {
 	start := 0
 	for _, child := range *nodes {
-		start += 1
+		start++
 		if len(child.Children) > 0 {
 			start += size(&child.Children)
 		}

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/readers"
 	"github.com/The-Mod-Elephant/infinity_dialog/pkg/translation"
-	"github.com/The-Mod-Elephant/infinity_dialog/pkg/util"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,13 +16,13 @@ var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
-type listVariables struct {
+type ListVariables struct {
 	table table.Model
 }
 
 func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	rows := []table.Row{}
-	fileContent, err := util.ReadFileToSlice(path)
+	fileContent, err := readers.ReadFileToSlice(path)
 	if err != nil {
 		return &rows
 	}
@@ -36,7 +36,7 @@ func generateRows(path string, file fs.FileInfo) *[]table.Row {
 	return &rows
 }
 
-func NewList() listVariables {
+func NewList() ListVariables {
 	columns := []table.Column{
 		{Title: "FileName", Width: int(0.2 * float64(width))},
 		{Title: "Lang", Width: int(0.1 * float64(width))},
@@ -63,33 +63,39 @@ func NewList() listVariables {
 		Bold(false)
 	t.SetStyles(s)
 
-	return listVariables{table: t}
+	return ListVariables{table: t}
 }
 
-func (l listVariables) readPath(path string) *[]table.Row {
+func (l ListVariables) readPath(path string) (*[]table.Row, error) {
 	rows := []table.Row{}
-	filepath.WalkDir(path, func(path string, file fs.DirEntry, err error) error {
+	err := filepath.WalkDir(path, func(path string, file fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		ext := filepath.Ext(file.Name())
-		if !file.IsDir() && strings.ToLower(ext) == ".tra" {
+		if !file.IsDir() && strings.EqualFold(ext, ".tra") {
 			info, _ := file.Info()
-			file_rows := *generateRows(path, info)
-			rows = append(rows, file_rows...)
+			fileRows := *generateRows(path, info)
+			rows = append(rows, fileRows...)
 		}
 
 		return nil
 	})
-	return &rows
+	if err != nil {
+		return nil, err
+	}
+	return &rows, nil
 }
 
-func (l listVariables) Init() tea.Cmd { return nil }
+func (l ListVariables) Init() tea.Cmd { return nil }
 
-func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (l ListVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case SelectedFilePath:
-		rows := l.readPath(string(msg))
+		rows, err := l.readPath(string(msg))
+		if err != nil {
+			return l, tea.Quit
+		}
 		l.table.SetRows(*rows)
 		return l, nil
 	case tea.WindowSizeMsg:
@@ -138,7 +144,7 @@ func (l listVariables) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return l, cmd
 }
 
-func (l listVariables) View() string {
+func (l ListVariables) View() string {
 	body := []string{l.table.View(), "\n\n", l.table.HelpView(), " enter"}
 	return baseStyle.Render(body...)
 }

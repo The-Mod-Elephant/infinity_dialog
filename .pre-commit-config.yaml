@@ -32,19 +32,27 @@ repos:
         language: system
         types: [go]
         pass_filenames: false
-      - id: go-fmt
-        stages: [pre-commit]
-        name: go fmt
-        description: Format files with cargo fmt.
-        entry: go fmt ./...
-        language: system
-        types: [go]
-        pass_filenames: false
       - id: go-mod-tidy
         stages: [pre-commit]
         name: go mod tidy
         description: Tidy go mod
         entry: go mod tidy
+        language: system
+        types: [go]
+        pass_filenames: false
+      - id: fmt
+        stages: [pre-commit]
+        name: format
+        description: Run go critic
+        entry: golangci-lint fmt ./...
+        language: system
+        types: [go]
+        pass_filenames: false
+      - id: golangci-lint
+        stages: [pre-commit]
+        name: golangci-lint
+        description: Run go critic
+        entry: golangci-lint run ./...
         language: system
         types: [go]
         pass_filenames: false

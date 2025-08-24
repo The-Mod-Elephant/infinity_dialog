@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/The-Mod-Elephant/infinity_dialog/pkg/util"
+	"github.com/The-Mod-Elephant/infinity_dialog/pkg/readers"
 	"github.com/The-Mod-Elephant/infinity_file_formats/bg"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,14 +28,14 @@ var (
 	}()
 )
 
-type fileview struct {
+type Fileview struct {
 	title    string
 	content  string
 	viewport viewport.Model
 }
 
-func NewFileView() fileview {
-	f := fileview{}
+func NewFileView() Fileview {
+	f := Fileview{}
 	headerHeight := lipgloss.Height(f.headerView())
 	footerHeight := lipgloss.Height(f.footerView())
 	verticalMarginHeight := headerHeight + footerHeight
@@ -44,53 +44,65 @@ func NewFileView() fileview {
 	return f
 }
 
-func GetFileContents(path string) (string, string) {
-	dir := filepath.Base(path)
-	content := ""
-	f, err := os.Open(path)
+func GetFileContents(path string) (string, error) {
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
+		return "", err
 	}
 	defer f.Close()
-	switch strings.ToLower(filepath.Ext(path)) {
+	info, err := f.Stat()
+	if err != nil {
+		return "", err
+	}
+	switch strings.ToLower(filepath.Ext(info.Name())) {
 	case ".are":
 		area, err := bg.OpenArea(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = area.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".bam":
 		bam, err := bg.OpenBAM(f, nil)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = bam.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".cre":
 		cre, err := bg.OpenCre(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = cre.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".dlg":
 		dlg, err := bg.OpenDlg(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = dlg.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".eff":
 		effv1, effv2, err := bg.OpenEff(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		if effv1 != nil {
@@ -99,49 +111,55 @@ func GetFileContents(path string) (string, string) {
 			err = effv2.WriteJson(buf)
 		}
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".itm":
 		item, err := bg.OpenITM(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = item.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".sto":
 		dlg, err := bg.OpenSTO(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = dlg.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	case ".spl":
 		dlg, err := bg.OpenSPL(f)
 		if err != nil {
+			return "", err
 		}
 		buf := new(bytes.Buffer)
 		err = dlg.WriteJson(buf)
 		if err != nil {
+			return "", err
 		}
-		content = buf.String()
+		return buf.String(), nil
 	default:
-		content, err = util.ReadFileToString(path)
-		if err != nil {
-			return content, dir
+		if contents, err := readers.ReadFileToString(path); err != nil {
+			return contents, nil
 		}
 	}
-	return content, dir
+	return "", nil
 }
 
-func (f fileview) Init() tea.Cmd {
+func (f Fileview) Init() tea.Cmd {
 	return nil
 }
 
-func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (f Fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case TitleMsg:
 		f.title = string(msg)
@@ -151,16 +169,22 @@ func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		f.viewport.SetContent(f.content)
 		return f, f.Init()
 	case SelectedFilePath:
-		content, title := GetFileContents(string(msg))
+		content, err := GetFileContents(string(msg))
+		if err != nil {
+			return f, tea.Quit
+		}
 		f.content = content
 		f.viewport.SetContent(f.content)
-		f.title = title
+		f.title = filepath.Base(string(msg))
 		return f, f.Init()
 	case PathMsg:
-		content, title := GetFileContents(string(msg))
+		content, err := GetFileContents(string(msg))
+		if err != nil {
+			return f, tea.Quit
+		}
 		f.content = content
 		f.viewport.SetContent(f.content)
-		f.title = title
+		f.title = filepath.Base(string(msg))
 		return f, f.Init()
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -177,7 +201,7 @@ func (f fileview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return f, cmd
 }
 
-func setViewport(f fileview, msg tea.WindowSizeMsg) {
+func setViewport(f Fileview, msg tea.WindowSizeMsg) {
 	headerHeight := lipgloss.Height(f.headerView())
 	footerHeight := lipgloss.Height(f.footerView())
 	verticalMarginHeight := headerHeight + footerHeight
@@ -188,17 +212,17 @@ func setViewport(f fileview, msg tea.WindowSizeMsg) {
 	f.viewport.Height = msg.Height - verticalMarginHeight
 }
 
-func (f fileview) View() string {
+func (f Fileview) View() string {
 	return fmt.Sprintf("%s\n%s\n%s", f.headerView(), f.viewport.View(), f.footerView())
 }
 
-func (f fileview) headerView() string {
+func (f Fileview) headerView() string {
 	title := titleStyle.Render(f.title)
 	line := strings.Repeat("─", max(0, f.viewport.Width-lipgloss.Width(title)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, title, line)
 }
 
-func (f fileview) footerView() string {
+func (f Fileview) footerView() string {
 	info := infoStyle.Render(fmt.Sprintf("%3.f%%", f.viewport.ScrollPercent()*100))
 	line := strings.Repeat("─", max(0, f.viewport.Width-lipgloss.Width(info)))
 	return lipgloss.JoinHorizontal(lipgloss.Center, line, info)
