@@ -17,7 +17,7 @@ jobs:
       with:
         set-safe-directory: true
     - uses: actions/setup-python@v5
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@v6
     - name: Install Deps
       run: |
         go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.4.0
